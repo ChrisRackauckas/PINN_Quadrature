@@ -7,7 +7,7 @@ using DelimitedFiles
 
 print("Precompiling Done")
 
-level_set(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100),GalacticOptim.ADAM(0.01), 3000)
+level_set(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 3000)
 
 function level_set(strategy, minimizer, maxIters)
 
@@ -78,7 +78,7 @@ function level_set(strategy, minimizer, maxIters)
 
     discretization2 = NeuralPDE.PhysicsInformedNN(chain, initθ; strategy = strategy)   #Second learning phase, lower learning parameter
     initθ == discretization2.initθ
-    prob2 = NeuralPDE.discretize(pde_system,discretization2)
+    prob2 = NeuralPDE.discretize(pde_system, discretization2)
     res2 = GalacticOptim.solve(prob2, GalacticOptim.ADAM(0.001), cb = cb, maxiters=4000)
     t_f = time_ns()
     print(string("Training time = ",(t_f - t_0)/10^9))
