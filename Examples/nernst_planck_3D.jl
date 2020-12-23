@@ -8,8 +8,9 @@ using DelimitedFiles
 print("Precompiling Done")
 
 function nernst_planck_run(strategy, minimizer, maxIters)
+
     ##  DECLARATIONS
-    @parameters t x y z θ
+    @parameters t x y z
     @variables c(..)
     @derivatives Dt'~t
     @derivatives Dx'~x
@@ -50,23 +51,22 @@ function nernst_planck_run(strategy, minimizer, maxIters)
     u = 10 #dummy
 
     # Operators
-    #grad_c = [Dx(c(t,x,y,z,θ)), Dy(c(t,x,y,z,θ)), Dz(c(t,x,y,z,θ))]
-    div    = - D*(Dxx(c(t,x,y,z,θ)) + Dyy(c(t,x,y,z,θ)) + Dzz(c(t,x,y,z,θ)))
-             + u*(Dx(c(t,x,y,z,θ)) + Dy(c(t,x,y,z,θ)) + Dz(c(t,x,y,z,θ)))
+    #grad_c = [Dx(c(t,x,y,z)), Dy(c(t,x,y,z)), Dz(c(t,x,y,z))]
+    div    = - D*(Dxx(c(t,x,y,z)) + Dyy(c(t,x,y,z)) + Dzz(c(t,x,y,z)))
+             + u*(Dx(c(t,x,y,z)) + Dy(c(t,x,y,z)) + Dz(c(t,x,y,z)))
 
     # Equation
-    eq = Dt(c(t,x,y,z,θ)) + div ~ 0      #NERNST-PLANCK EQUATION
+    eq = Dt(c(t,x,y,z)) + div ~ 0      #NERNST-PLANCK EQUATION
 
 
-    bcs = [c(0,x,y,z,θ) ~ 0]
+    bcs = [c(0,x,y,z) ~ 0]
 
     ## NEURAL NETWORK
     n = 16   #neuron number
-    ers = 3000  #number of iterations
 
     chain = FastChain(FastDense(3,n,Flux.σ),FastDense(n,n,Flux.σ),FastDense(n,1))   #Neural network from Flux library
 
-    discretization = NeuralPDE.PhysicsInformedNN([dt,dx,dy,dz],chain,strategy = strategy)
+    discretization = NeuralPDE.PhysicsInformedNN(chain,strategy = strategy)
 
     indvars = [t,x,y,z]   #independent variables
     depvars = [c]       #dependent (target) variable
@@ -83,15 +83,15 @@ function nernst_planck_run(strategy, minimizer, maxIters)
     pde_system = PDESystem(eq, bcs, domains, indvars, depvars)
     prob = discretize(pde_system, discretization)
 
-    a_1 = time_ns()
+    t_0 = time_ns()
 
-    res = GalacticOptim.solve(prob, minimizer = minimizer, cb = cb, maxiters = maxIters) #allow_f_increase = false,
+    res = GalacticOptim.solve(prob, minimzer; cb = cb, maxiters=maxIters) #allow_f_increase = false,
 
-    b_1 = time_ns()
-    training_time = (b_1-a_1)/10^9
+    t_f = time_ns()
+    training_time = (t_f-t_0)/10^9
     #initθ = res.minimizer
 
-    pars = open(readdlm,"/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML/Quadrature-SciML-examples/Nernst-Planck equations/np_params.txt") #to import parameters from previous training (change also line 249 accordingly)
+    pars = open(readdlm,"/np_params.txt") #to import parameters from previous training
     pars
 
     phi = discretization.phi

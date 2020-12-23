@@ -12,7 +12,7 @@ level_set(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, a
 function level_set(strategy, minimizer, maxIters)
 
     ##  DECLARATIONS
-    @parameters t x y θ
+    @parameters t x y
     @variables u(..)
     @derivatives Dt'~t
     @derivatives Dx'~x
@@ -35,17 +35,17 @@ function level_set(strategy, minimizer, maxIters)
     domains = [t ∈ IntervalDomain(0.0,tmax),
                x ∈ IntervalDomain(0.0,xwidth),
                y ∈ IntervalDomain(0.0,ywidth)]
-               xs = 0.0 : dx : xwidth
-               ys = 0.0 : dy : ywidth
+    xs = 0.0 : dx : xwidth
+    ys = 0.0 : dy : ywidth
 
     # Definitions
-    gn   = (Dx(u(t,x,y,θ))^2 + Dy(u(t,x,y,θ))^2)^0.5 #gradient's norm
+    gn   = (Dx(u(t,x,y))^2 + Dy(u(t,x,y))^2)^0.5 #gradient's norm
     S = 1
-    eq = Dt(u(t,x,y,θ)) + S*gn ~ 0   #LEVEL SET EQUATION
+    eq = Dt(u(t,x,y)) + S*gn ~ 0   #LEVEL SET EQUATION
 
     initialCondition = (xScale*x^2 + (yScale*y^2))^0.5 - 0.2   #Distance from ignition
 
-    bcs = [u(0,x,y,θ) ~ initialCondition]  #from literature
+    bcs = [u(0,x,y) ~ initialCondition]  #from literature
 
 
     ## NEURAL NETWORK
@@ -53,10 +53,7 @@ function level_set(strategy, minimizer, maxIters)
 
     chain = FastChain(FastDense(3,n,Flux.σ),FastDense(n,n,Flux.σ),FastDense(n,1))   #Neural network from Flux library
 
-    q_strategy = NeuralPDE.QuadratureTraining(algorithm =CubaCuhre(),reltol=1e-8,abstol=1e-8,maxiters=100)  #Training strategy
-
-    discretization = NeuralPDE.PhysicsInformedNN([dt,dx,dy],chain,strategy = q_strategy)
-
+    discretization = NeuralPDE.PhysicsInformedNN(chain, strategy = strategy)
 
     indvars = [t,x,y]   #phisically independent variables
     depvars = [u]       #dependent (target) variable
@@ -73,22 +70,22 @@ function level_set(strategy, minimizer, maxIters)
     pde_system = PDESystem(eq, bcs, domains, indvars, depvars)
     prob = discretize(pde_system, discretization)
 
-    a_1 = time_ns()
+    t_0 = time_ns()
 
-    res = GalacticOptim.solve(prob, minimizer = minimizer, cb = cb, maxiters=maxIters) #allow_f_increase = false,
+    res = GalacticOptim.solve(prob, minimzer; cb = cb, maxiters=maxIters) #allow_f_increase = false,
 
     initθ = res.minimizer
 
-    discretization2 = NeuralPDE.PhysicsInformedNN([dt,dx,dy],chain, initθ; strategy = strategy)   #Second learning phase, lower learning parameter
+    discretization2 = NeuralPDE.PhysicsInformedNN(chain, initθ; strategy = strategy)   #Second learning phase, lower learning parameter
     initθ == discretization2.initθ
     prob2 = NeuralPDE.discretize(pde_system,discretization2)
     res2 = GalacticOptim.solve(prob2, GalacticOptim.ADAM(0.001), cb = cb, maxiters=4000)
-    b_1 = time_ns()
-    print(string("Training time = ",(b_1-a_1)/10^9))
+    t_f = time_ns()
+    print(string("Training time = ",(t_f - t_0)/10^9))
     initθ2 = res2.minimizer
 
 
-    par = open(readdlm,"/Julia_implementation/LevelSetEq/params_level_set_stage_final_4800iter.txt") #to import parameters from previous training (change also line 227 accordingly)
+    par = open(readdlm,"/params_level_set_4800iter.txt") #to import parameters from previous training (change also line 102 accordingly)
     par
 
 
