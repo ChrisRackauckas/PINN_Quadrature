@@ -12,8 +12,8 @@ level_set(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, a
 function level_set(strategy, minimizer, maxIters)
 
     ##  DECLARATIONS
-    @parameters t x y
-    @variables u(..)
+    @parameters  t x y
+    @variables   u(..)
     @derivatives Dt'~t
     @derivatives Dx'~x
     @derivatives Dy'~y
