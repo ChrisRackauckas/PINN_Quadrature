@@ -7,6 +7,8 @@ using DelimitedFiles
 
 print("Precompiling Done")
 
+nernst_planck_run(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(),reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 3000)
+
 function nernst_planck_run(strategy, minimizer, maxIters)
 
     ##  DECLARATIONS
@@ -85,7 +87,7 @@ function nernst_planck_run(strategy, minimizer, maxIters)
 
     t_0 = time_ns()
 
-    res = GalacticOptim.solve(prob, minimzer; cb = cb, maxiters=maxIters) #allow_f_increase = false,
+    res = GalacticOptim.solve(prob, minimizer; cb = cb, maxiters=maxIters) #allow_f_increase = false,
 
     t_f = time_ns()
     training_time = (t_f-t_0)/10^9

@@ -39,11 +39,25 @@ function level_set(strategy, minimizer, maxIters)
     ys = 0.0 : dy : ywidth
 
     # Definitions
-    gn   = (Dx(u(t,x,y))^2 + Dy(u(t,x,y))^2)^0.5 #gradient's norm
-    S = 1
-    eq = Dt(u(t,x,y)) + S*gn ~ 0   #LEVEL SET EQUATION
+    x0    = 0.5
+    y0    = 0.5
+    Uwind = [0.0, 2.0]  #wind vector
 
-    initialCondition = (xScale*x^2 + (yScale*y^2))^0.5 - 0.2   #Distance from ignition
+    # Operators
+    gn   = (Dx(u(t,x,y))^2 + Dy(u(t,x,y))^2)^0.5  #gradient's norm
+    ∇u   = [Dx(u(t,x,y)), Dy(u(t,x,y))]
+    n    = ∇u/gn              #normal versor
+    U    = ((Uwind[1]*n[1] + Uwind[2]*n[2])^2)^0.5 #inner product between wind and normal vector
+
+    R0 = 0.112471
+    ϕw = 0.156927*max((0.44*U)^0.04086,1.447799)
+    ϕs = 0
+    S  = R0*(1 + ϕw + ϕs)
+
+    # Equation
+    eq = Dt(u(t,x,y)) + S*gn ~ 0  #LEVEL SET EQUATION
+
+    initialCondition = (xScale*(x - x0)^2 + (yScale*(y - y0)^2))^0.5 - 0.2   #Distance from ignition
 
     bcs = [u(0,x,y) ~ initialCondition]  #from literature
 
@@ -72,7 +86,7 @@ function level_set(strategy, minimizer, maxIters)
 
     t_0 = time_ns()
 
-    res = GalacticOptim.solve(prob, minimzer; cb = cb, maxiters=maxIters) #allow_f_increase = false,
+    res = GalacticOptim.solve(prob, minimizer; cb = cb, maxiters=maxIters) #allow_f_increase = false,
 
     initθ = res.minimizer
 
