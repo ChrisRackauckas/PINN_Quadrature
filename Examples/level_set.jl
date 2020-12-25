@@ -7,7 +7,7 @@ using DelimitedFiles
 
 print("Precompiling Done")
 
-level_set(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 3000)
+level_set(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 30)
 
 function level_set(strategy, minimizer, maxIters)
 
@@ -35,8 +35,10 @@ function level_set(strategy, minimizer, maxIters)
     domains = [t ∈ IntervalDomain(0.0,tmax),
                x ∈ IntervalDomain(0.0,xwidth),
                y ∈ IntervalDomain(0.0,ywidth)]
+
     xs = 0.0 : dx : xwidth
     ys = 0.0 : dy : ywidth
+    ts = 0.0 : dt : tmax
 
     # Definitions
     x0    = 0.5
@@ -93,31 +95,27 @@ function level_set(strategy, minimizer, maxIters)
     discretization2 = NeuralPDE.PhysicsInformedNN(chain, initθ; strategy = strategy)   #Second learning phase, lower learning parameter
     initθ == discretization2.initθ
     prob2 = NeuralPDE.discretize(pde_system, discretization2)
-    res2 = GalacticOptim.solve(prob2, GalacticOptim.ADAM(0.001), cb = cb, maxiters=4000)
+    res2 = GalacticOptim.solve(prob2, GalacticOptim.ADAM(0.001), cb = cb, maxiters=40)
     t_f = time_ns()
     print(string("Training time = ",(t_f - t_0)/10^9))
     initθ2 = res2.minimizer
 
-
-    par = open(readdlm,"/params_level_set_4800iter.txt") #to import parameters from previous training (change also line 102 accordingly)
-    par
-
+    #par = open(readdlm,"/params_level_set_4800iter.txt") #to import parameters from previous training (change also line 102 accordingly)
+    #par
 
     phi = discretization.phi
 
     printBCSComp = true     #prints initial condition comparison and training loss plot
 
-    xs = 0.0 : dx : xwidth
-    ys = 0.0 : dy : ywidth
+    domain = [ts, xs, ys]
 
-    ts = 1 : dt : tmax
+    u_predict = [reshape([first(phi([t,x,y],res2.minimizer)) for t in ts for x in xs for y in ys], (length(ts),length(xs),length(ys)))]  #matrix of model's prediction
 
-    u_predict = [reshape([first(phi([t,x,y],res2.minimizer)) for x in xs for y in ys], (length(xs),length(ys))) for t in ts]  #matrix of model's prediction
+    #maxlim = maximum(maximum(u_predict[t]) for t = 1:length(ts))
+    #minlim = minimum(minimum(u_predict[t]) for t = 1:length(ts))
 
-    maxlim = maximum(maximum(u_predict[t]) for t = 1:length(ts))
-    minlim = minimum(minimum(u_predict[t]) for t = 1:length(ts))
+    #    trainingPlot = Plots.plot(1:(maxIters + 1), losses, yaxis=:log, title = string("Training time = 270 s",
+    #        "\\n Iterations: ", maxIters, "   NN: 3>16>1"), ylabel = "log(loss)", legend = false) #loss plot
 
-        trainingPlot = Plots.plot(1:(maxIters + 1), losses, yaxis=:log, title = string("Training time = 270 s",
-            "\\n Iterations: ", maxIters, "   NN: 3>16>1"), ylabel = "log(loss)", legend = false) #loss plot
-
+    return [losses, u_predict, domain, training_time] #add numeric solution
 end

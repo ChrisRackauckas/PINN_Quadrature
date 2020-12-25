@@ -7,7 +7,7 @@ using DelimitedFiles
 
 print("Precompiling Done")
 
-nernst_planck_run(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(),reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 3000)
+nernst_planck_run(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(),reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 300)
 
 function nernst_planck_run(strategy, minimizer, maxIters)
 
@@ -46,27 +46,29 @@ function nernst_planck_run(strategy, minimizer, maxIters)
     xs = 0.0 : dx : xwidth
     ys = 0.0 : dy : ywidth
     zs = 0.0 : dz : zwidth
-
+    ts = 0.0 : dt : tmax
 
     # Constants
     D = 1  #dummy
-    u = 10 #dummy
+    ux = 10 #dummy
+    uy = 10 #dummy
+    uz = 10 #dummy
 
     # Operators
     #grad_c = [Dx(c(t,x,y,z)), Dy(c(t,x,y,z)), Dz(c(t,x,y,z))]
-    div    = - D*(Dxx(c(t,x,y,z)) + Dyy(c(t,x,y,z)) + Dzz(c(t,x,y,z)))
-             + u*(Dx(c(t,x,y,z)) + Dy(c(t,x,y,z)) + Dz(c(t,x,y,z)))
+    div = - D*(Dxx(c(t,x,y,z)) + Dyy(c(t,x,y,z)) + Dzz(c(t,x,y,z)))
+          + (ux*Dx(c(t,x,y,z)) + uy*Dy(c(t,x,y,z)) + uz*Dz(c(t,x,y,z)))
 
     # Equation
     eq = Dt(c(t,x,y,z)) + div ~ 0      #NERNST-PLANCK EQUATION
 
-
+    # Boundary conditions
     bcs = [c(0,x,y,z) ~ 0]
 
     ## NEURAL NETWORK
     n = 16   #neuron number
 
-    chain = FastChain(FastDense(3,n,Flux.σ),FastDense(n,n,Flux.σ),FastDense(n,1))   #Neural network from Flux library
+    chain = FastChain(FastDense(4,n,Flux.σ),FastDense(n,n,Flux.σ),FastDense(n,1))   #Neural network from Flux library
 
     discretization = NeuralPDE.PhysicsInformedNN(chain,strategy = strategy)
 
@@ -93,11 +95,15 @@ function nernst_planck_run(strategy, minimizer, maxIters)
     training_time = (t_f-t_0)/10^9
     #initθ = res.minimizer
 
-    pars = open(readdlm,"/np_params.txt") #to import parameters from previous training
-    pars
+    #pars = open(readdlm,"/np_params.txt") #to import parameters from previous training
+    #pars
 
     phi = discretization.phi
 
-    domain = [xs, ys, zs]
-    return [losses, u_predict, u_numeric, domain, time]
+    domain = [ts, xs, ys, zs]
+
+    u_predict  = [reshape([phi([t,x,y,z],res.minimizer) for t in ts for x in xs for y in ys for z in zs],
+                 (length(ts),length(xs),length(ys),length(zs)))]
+
+    return [losses, u_predict, domain, training_time] #add numeric solution
 end
