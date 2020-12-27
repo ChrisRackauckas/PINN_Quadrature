@@ -8,10 +8,7 @@ using QuasiMonteCarlo
 
 print("Precompiling Done")
 
-<<<<<<< Updated upstream
 #template(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 30)
-=======
->>>>>>> Stashed changes
 
 function template(strategy, minimizer, maxIters)
 
@@ -23,11 +20,7 @@ function template(strategy, minimizer, maxIters)
     @derivatives Dy'~y
 
     # Discretization
-<<<<<<< Updated upstream
     xwidth      = 1.0
-=======
-    xwidth      = 1.0      
->>>>>>> Stashed changes
     ywidth      = 1.0
     tmax        = 1.0
     xScale      = 1.0
@@ -77,16 +70,9 @@ function template(strategy, minimizer, maxIters)
     print(string("Training time = ",(t_f - t_0)/10^9))
 
     phi = discretization.phi
-<<<<<<< Updated upstream
-=======
 
->>>>>>> Stashed changes
     domain = [ts, xs, ys]
     u_predict = [reshape([first(phi([t,x,y],res.minimizer)) for t in ts for x in xs for y in ys], (length(ts),length(xs),length(ys)))]  #matrix of model's prediction
-<<<<<<< Updated upstream
-=======
 
-
->>>>>>> Stashed changes
     return [losses, u_predict, u_predict,  domain, training_time] #add numeric solution
 end
