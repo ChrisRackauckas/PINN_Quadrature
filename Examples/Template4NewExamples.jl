@@ -68,21 +68,9 @@ function level_set(strategy, minimizer, maxIters)
     prob = discretize(pde_system, discretization)
 
     t_0 = time_ns()
-
     res = GalacticOptim.solve(prob, minimizer; cb = cb, maxiters=maxIters) #allow_f_increase = false,
-
-    initθ = res.minimizer
-
-    discretization2 = NeuralPDE.PhysicsInformedNN(chain, initθ; strategy = strategy)   #Second learning phase, lower learning parameter
-    initθ = discretization2.initθ
-    prob2 = NeuralPDE.discretize(pde_system, discretization2)
-    res2 = GalacticOptim.solve(prob2, GalacticOptim.ADAM(0.001), cb = cb, maxiters=40)
     t_f = time_ns()
     print(string("Training time = ",(t_f - t_0)/10^9))
-    initθ2 = res2.minimizer
-
-    #par = open(readdlm,"/params_level_set_4800iter.txt") #to import parameters from previous training (change also line 102 accordingly)
-    #par
 
     phi = discretization.phi
 
@@ -90,7 +78,7 @@ function level_set(strategy, minimizer, maxIters)
 
     domain = [ts, xs, ys]
 
-    u_predict = [reshape([first(phi([t,x,y],res2.minimizer)) for t in ts for x in xs for y in ys], (length(ts),length(xs),length(ys)))]  #matrix of model's prediction
+    u_predict = [reshape([first(phi([t,x,y],res.minimizer)) for t in ts for x in xs for y in ys], (length(ts),length(xs),length(ys)))]  #matrix of model's prediction
 
     #maxlim = maximum(maximum(u_predict[t]) for t = 1:length(ts))
     #minlim = minimum(minimum(u_predict[t]) for t = 1:length(ts))
