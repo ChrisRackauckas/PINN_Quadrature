@@ -96,7 +96,6 @@ function level_set(strategy, minimizer, maxIters)
 
     phi = discretization.phi
 
-    printBCSComp = true     #prints initial condition comparison and training loss plot
 
     domain = [ts, xs, ys]
 
