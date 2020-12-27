@@ -4,12 +4,13 @@ using Flux, ModelingToolkit, GalacticOptim, Optim, DiffEqFlux
 using Plots
 using PyPlot
 using DelimitedFiles
+using QuasiMonteCarlo
 
 print("Precompiling Done")
 
-nernst_planck_run(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(),reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 300)
+#nernst_planck(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(),reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 300)
 
-function nernst_planck_run(strategy, minimizer, maxIters)
+function nernst_planck(strategy, minimizer, maxIters)
 
     ##  DECLARATIONS
     @parameters t x y z
