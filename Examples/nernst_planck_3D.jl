@@ -8,7 +8,7 @@ using QuasiMonteCarlo
 
 print("Precompiling Done")
 
-#nernst_planck(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(),reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 300)
+res = nernst_planck(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(),reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 3)
 
 function nernst_planck(strategy, minimizer, maxIters)
 
@@ -106,5 +106,6 @@ function nernst_planck(strategy, minimizer, maxIters)
     u_predict  = [reshape([phi([t,x,y,z],res.minimizer) for t in ts for x in xs for y in ys for z in zs],
                  (length(ts),length(xs),length(ys),length(zs)))]
 
-    return [losses, u_predict, domain, training_time] #add numeric solution
+
+    return [losses, u_predict, u_predict, domain, training_time] #add numeric solution
 end

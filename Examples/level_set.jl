@@ -118,5 +118,5 @@ function level_set(strategy, minimizer, maxIters)
     #    trainingPlot = Plots.plot(1:(maxIters + 1), losses, yaxis=:log, title = string("Training time = 270 s",
     #        "\\n Iterations: ", maxIters, "   NN: 3>16>1"), ylabel = "log(loss)", legend = false) #loss plot
 
-    return [losses, u_predict, domain, training_time] #add numeric solution
+    return [losses, u_predict, u_predict,  domain, training_time] #add numeric solution
 end
