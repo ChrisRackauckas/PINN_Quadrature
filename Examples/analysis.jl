@@ -6,6 +6,7 @@
 # Import all the examples
 include("./nernst_planck_3D.jl")
 include("./level_set.jl")
+#include("./schrodinger.jl")
 
 # Settings:
 maxIters   = 3  #number of iterations

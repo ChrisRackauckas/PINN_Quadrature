@@ -8,7 +8,7 @@ using QuasiMonteCarlo
 
 print("Precompiling Done")
 
-#level_set(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 30)
+level_set(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 30)
 
 function level_set(strategy, minimizer, maxIters)
 
@@ -92,14 +92,15 @@ function level_set(strategy, minimizer, maxIters)
     res = GalacticOptim.solve(prob, minimizer; cb = cb, maxiters=maxIters) #allow_f_increase = false,
 
     t_f = time_ns()
-    print(string("Training time = ",(t_f - t_0)/10^9))
+    training_time = t_f - t_0
+    #print(string("Training time = ",(t_f - t_0)/10^9))
 
     phi = discretization.phi
 
-
+    # Model prediction
     domain = [ts, xs, ys]
 
-    u_predict = [reshape([first(phi([t,x,y],res.minimizer)) for t in ts for x in xs for y in ys], (length(ts),length(xs),length(ys)))]  #matrix of model's prediction
+    u_predict = [reshape([first(phi([t,x,y],res.minimizer)) for x in xs for y in ys], (length(xs),length(ys))) for t in ts]  #matrix of model's prediction
 
-    return [losses, u_predict, u_predict,  domain, training_time] #add numeric solution
+    return [losses, u_predict, u_predict, domain, training_time] #add numeric solution
 end

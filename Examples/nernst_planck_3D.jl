@@ -8,7 +8,7 @@ using QuasiMonteCarlo
 
 print("Precompiling Done")
 
-res = nernst_planck(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(),reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 3)
+nernst_planck(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(),reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 3)
 
 function nernst_planck(strategy, minimizer, maxIters)
 
@@ -94,17 +94,14 @@ function nernst_planck(strategy, minimizer, maxIters)
 
     t_f = time_ns()
     training_time = (t_f-t_0)/10^9
-    #initθ = res.minimizer
-
-    #pars = open(readdlm,"/np_params.txt") #to import parameters from previous training
-    #pars
 
     phi = discretization.phi
 
+    # Model prediction
     domain = [ts, xs, ys, zs]
 
-    u_predict  = [reshape([phi([t,x,y,z],res.minimizer) for t in ts for x in xs for y in ys for z in zs],
-                 (length(ts),length(xs),length(ys),length(zs)))]
+    u_predict  = [reshape([phi([t,x,y,z],res.minimizer) for x in xs for y in ys for z in zs],
+                 (length(xs),length(ys),length(zs))) for t in ts]
 
 
     return [losses, u_predict, u_predict, domain, training_time] #add numeric solution
