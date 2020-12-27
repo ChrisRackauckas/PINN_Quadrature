@@ -8,9 +8,9 @@ using QuasiMonteCarlo
 
 print("Precompiling Done")
 
-#level_set(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 30)
+#template(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 30)
 
-function level_set(strategy, minimizer, maxIters)
+function template(strategy, minimizer, maxIters)
 
     ##  DECLARATIONS
     @parameters  t x y
@@ -20,9 +20,9 @@ function level_set(strategy, minimizer, maxIters)
     @derivatives Dy'~y
 
     # Discretization
-    xwidth      = 1.0      #ft
+    xwidth      = 1.0
     ywidth      = 1.0
-    tmax        = 1.0      #min
+    tmax        = 1.0
     xScale      = 1.0
     yScale      = 1.0
     xMeshNum    = 10
@@ -47,14 +47,11 @@ function level_set(strategy, minimizer, maxIters)
 
     ## NEURAL NETWORK
     n = 16   #neuron number
-
     chain = FastChain(FastDense(3,n,Flux.σ),FastDense(n,n,Flux.σ),FastDense(n,1))   #Neural network from Flux library
-
     discretization = NeuralPDE.PhysicsInformedNN(chain, strategy = strategy)
 
     indvars = [t,x,y]   #phisically independent variables
     depvars = [u]       #dependent (target) variable
-
     dim = length(domains)
 
     losses = []
@@ -73,18 +70,7 @@ function level_set(strategy, minimizer, maxIters)
     print(string("Training time = ",(t_f - t_0)/10^9))
 
     phi = discretization.phi
-
-    printBCSComp = true     #prints initial condition comparison and training loss plot
-
     domain = [ts, xs, ys]
-
     u_predict = [reshape([first(phi([t,x,y],res.minimizer)) for t in ts for x in xs for y in ys], (length(ts),length(xs),length(ys)))]  #matrix of model's prediction
-
-    #maxlim = maximum(maximum(u_predict[t]) for t = 1:length(ts))
-    #minlim = minimum(minimum(u_predict[t]) for t = 1:length(ts))
-
-    #    trainingPlot = Plots.plot(1:(maxIters + 1), losses, yaxis=:log, title = string("Training time = 270 s",
-    #        "\\n Iterations: ", maxIters, "   NN: 3>16>1"), ylabel = "log(loss)", legend = false) #loss plot
-
     return [losses, u_predict, u_predict,  domain, training_time] #add numeric solution
 end
