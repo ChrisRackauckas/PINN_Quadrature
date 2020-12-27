@@ -55,20 +55,18 @@ end
 # ANALYSIS OF RESULTS: NERNST-PLANCK 3D
 #////////////////////////////////////////
 
-# Time Benchmark
-#----------------------------
+## Time Benchmark
 benchmark_res_name = Dict()
 for strat=1:5#length(strategies) # strategy
       for min =1:length(minimizers)
             push!(benchmark_res_name, string(strategies_short_name[strat], " + " , minimizers_short_name[min]) => benchmark_res[string(strat,min)])
       end
 end
-Plots.bar(collect(keys(benchmark_res_name)), collect(values(benchmark_res_name)), title = string("Nernst-Planck"), xrotation = 90, label = "")
+Plots.bar(collect(keys(benchmark_res_name)), collect(values(benchmark_res_name)), title = string("Nernst-Planck"), xrotation = 90)
 savefig("Nernst-Planck_time.pdf")
 
 
-# Convergence
-#----------------------------
+## Convergence
 #Plotting the first strategy with the first minimizer out from the loop to initialize the canvas
 current_label = string("Strategy: ", strategies[1], "  Minimizer: ", minimizers[1])
 Plots.plot(1:(maxIters + 1), losses_res["11"], yaxis=:log10, title = string("Nernst-Planck"), ylabel = "log(loss)", legend = true)
@@ -82,9 +80,41 @@ end
 savefig("Nernst-Planck_loss.pdf")
 
 
+## Comparison Predicted solution vs Numerical solution
+integrals = Dict()
 
-# U-Predict <=> U-Numeric comparison
+to_print = [] #["11", "32"]
 
-p1 = plot(xs, ts, u_real, linetype=:contourf,title = "analytic");
-p2 = plot(xs, ts, u_predict, linetype=:contourf,title = "predict $name");
-p3 = plot(xs, ts, diff_u,linetype=:contourf,title = "error");
+for strat=1:5 #length(strategies) # strategy
+      for min =1:length(minimizers)
+            u_predict = prediction_res[string(strat,min)][1]
+            u_real = numeric_res[string(strat,min)][1]
+
+            # dimensions
+            ts = collect(domains[string(strat,min)][1])
+            xs = collect(domains[string(strat,min)][2])
+            ys = collect(domains[string(strat,min)][3])
+            zs = collect(domains[string(strat,min)][4])
+            XS = [xs,ys,zs]
+
+            diff_u = abs.(u_predict .- u_real)
+
+            if string(strat,min) ∈ to_print
+                  """
+                  p1 = Plots.plot(XS, ts, u_real, linetype=:contourf,title = "analytic");
+                  p2 = Plots.plot(u_predict[1,:,:,1], linetype=:contourf, title = "predict");
+                  p3 = Plots.plot(XS, ts, diff_u,linetype=:contourf,title = "error");
+                  savefig(p1,"p1.pdf")
+                  savefig(p2,"p2.pdf")
+                  savefig(p3,"p3.pdf")
+                  """
+            end
+
+            integral = sum(diff_u)[1]
+            push!(integrals, string(strategies_short_name[strat], " + " , minimizers_short_name[min]) => integral)
+
+      end
+end
+
+Plots.bar(collect(keys(integrals)), collect(values(integrals)), title = string("Nernst-Planck Error Integrals"), xrotation = 90)
+savefig("Nernst-Planck_strategies_MAEs.pdf")
