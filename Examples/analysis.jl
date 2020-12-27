@@ -73,7 +73,7 @@ savefig("Nernst-Planck_time.pdf")
 current_label = string("Strategy: ", strategies[1], "  Minimizer: ", minimizers[1])
 Plots.plot(1:(maxIters + 1), losses_res["11"], yaxis=:log10, title = string("Nernst-Planck"), ylabel = "log(loss)", legend = true)
 for strat=2:5#length(strategies) # strategy
-      for min =2:length(minimizers) # minimizer
+      for min =1:length(minimizers) # minimizer
             # Learning curve plots with different strategies, minimizer
             current_label = string("Strategy: ", strategies[strat], "  Minimizer: ", minimizers[min])
             Plots.plot!(1:(maxIters + 1), losses_res[string(strat,min)], yaxis=:log10, title = string("Nernst-Planck"), ylabel = "log(loss)", legend = true)
@@ -82,8 +82,8 @@ end
 savefig("Nernst-Planck_loss.pdf")
 
 
+
 # U-Predict <=> U-Numeric comparison
-#---------------------------
 
 p1 = plot(xs, ts, u_real, linetype=:contourf,title = "analytic");
 p2 = plot(xs, ts, u_predict, linetype=:contourf,title = "predict $name");
