@@ -51,22 +51,25 @@ end
 
 
 
-#////////////////////////////
-# ANALYSIS OF RESULTS
-#////////////////////////////
+#////////////////////////////////////////
+# ANALYSIS OF RESULTS: NERNST-PLANCK 3D
+#////////////////////////////////////////
 
 # Time Benchmark
+#----------------------------
 benchmark_res_name = Dict()
 for strat=1:5#length(strategies) # strategy
       for min =1:length(minimizers)
             push!(benchmark_res_name, string(strategies_short_name[strat], " + " , minimizers_short_name[min]) => benchmark_res[string(strat,min)])
       end
 end
-Plots.bar(collect(keys(benchmark_res_name)), collect(values(benchmark_res_name)), title = string("Nernst-Planck"), xrotation = 90, label = )
+Plots.bar(collect(keys(benchmark_res_name)), collect(values(benchmark_res_name)), title = string("Nernst-Planck"), xrotation = 90, label = "")
 savefig("Nernst-Planck_time.pdf")
 
 
 # Convergence
+#----------------------------
+#Plotting the first strategy with the first minimizer out from the loop to initialize the canvas
 current_label = string("Strategy: ", strategies[1], "  Minimizer: ", minimizers[1])
 Plots.plot(1:(maxIters + 1), losses_res["11"], yaxis=:log10, title = string("Nernst-Planck"), ylabel = "log(loss)", legend = true)
 for strat=2:5#length(strategies) # strategy
@@ -79,4 +82,9 @@ end
 savefig("Nernst-Planck_loss.pdf")
 
 
-# Sampling
+# U-Predict <=> U-Numeric comparison
+#---------------------------
+
+p1 = plot(xs, ts, u_real, linetype=:contourf,title = "analytic");
+p2 = plot(xs, ts, u_predict, linetype=:contourf,title = "predict $name");
+p3 = plot(xs, ts, diff_u,linetype=:contourf,title = "error");
