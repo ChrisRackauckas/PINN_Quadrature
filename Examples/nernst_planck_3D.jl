@@ -8,7 +8,7 @@ using QuasiMonteCarlo
 
 print("Precompiling Done")
 
-nernst_planck(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(),reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 3)
+#nernst_planck(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(),reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 3)
 
 function nernst_planck(strategy, minimizer, maxIters)
 
