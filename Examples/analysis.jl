@@ -6,6 +6,8 @@
 # Import all the examples
 include("./nernst_planck_3D.jl")
 include("./level_set.jl")
+include("./allen_cahn.jl")
+
 #include("./schrodinger.jl")
 
 # Settings:
