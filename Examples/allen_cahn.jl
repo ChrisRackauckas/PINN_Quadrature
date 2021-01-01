@@ -9,8 +9,7 @@ using LinearAlgebra
 
 print("Precompiling Done")
 
-
-allen_cahn(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 30)
+#allen_cahn(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 300)
 
 # 4 spatial dimensions
 function allen_cahn(strategy, minimizer, maxIters)
@@ -28,19 +27,19 @@ function allen_cahn(strategy, minimizer, maxIters)
 
 
     # Discretization
-    tmax        = 1.0
+    tmax         = 1.0
     x1width      = 1.0
     x2width      = 1.0
     x3width      = 1.0
     x4width      = 1.0
 
-    tMeshNum    = 10
+    tMeshNum     = 10
     x1MeshNum    = 10
     x2MeshNum    = 10
     x3MeshNum    = 10
     x4MeshNum    = 10
 
-    dt  = tmax/tMeshNum
+    dt   = tmax/tMeshNum
     dx1  = x1width/x1MeshNum
     dx2  = x2width/x2MeshNum
     dx3  = x3width/x3MeshNum
@@ -52,7 +51,7 @@ function allen_cahn(strategy, minimizer, maxIters)
                x3 ∈ IntervalDomain(0.0,x3width),
                x4 ∈ IntervalDomain(0.0,x4width)]
 
-    ts = 0.0 : dt : tmax
+    ts  = 0.0 : dt : tmax
     x1s = 0.0 : dx1 : x1width
     x2s = 0.0 : dx2 : x2width
     x3s = 0.0 : dx3 : x3width
@@ -68,7 +67,6 @@ function allen_cahn(strategy, minimizer, maxIters)
     initialCondition =  1/(2 + 0.4 * (x1*x1 + x2*x2 + x3*x3 + x4*x4)) # see PNAS paper
 
     bcs = [u(0,x1,x2,x3,x4) ~ initialCondition]  #from literature
-
 
     ## NEURAL NETWORK
     n = 20   #neuron number
@@ -103,7 +101,7 @@ function allen_cahn(strategy, minimizer, maxIters)
     phi = discretization.phi
 
     # Model prediction
-    domain = [ts, x1s,x2s,x3s,x4s]
+    domain = [ts,x1s,x2s,x3s,x4s]
 
     u_predict = [reshape([first(phi([t,x1,x2,x3,x4],res.minimizer)) for x1 in x1s for x2 in x2s for x3 in x3s for x4 in x4s], (length(x1s),length(x2s), length(x3s),length(x4s))) for t in ts]  #matrix of model's prediction
 
