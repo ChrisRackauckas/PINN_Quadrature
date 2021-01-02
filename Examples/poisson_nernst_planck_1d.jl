@@ -162,7 +162,7 @@ function nernst_planck_1d(strategy, minimizer, maxIters)
     end
 
     t_0 = time_ns()
-    res = GalacticOptim.solve(prob, minimizer = minimizer ;cb=cb, maxiters = maxIters)
+    res = GalacticOptim.solve(prob, minimizer ; cb=cb, maxiters = maxIters)
     t_f = time_ns()
 
     training_time = (t_f - t_0)/10^9
@@ -219,6 +219,10 @@ function plot_PNP(res, loss, discretization, pars)
 end
 
 function solve_PNP()
-    strategy = NeuralPDE.GridTraining(dx=1e-2)
-    return solve_PNP(strategy)
+    strategy  = NeuralPDE.QuadratureTraining(algorithm = HCubatureJL(), reltol = 1e-8, abstol = 1e-8, maxiters = 100)
+    minimizer = Optim.BFGS()
+    maxIters  = 200
+    return nernst_planck_1d(strategy, minimizer, maxIters)
 end
+
+solve_PNP()
