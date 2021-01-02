@@ -9,7 +9,7 @@ using LinearAlgebra
 
 print("Precompiling Done")
 
-#allen_cahn(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 300)
+losses, u_predict, u_predict, domain, training_time = allen_cahn(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 100)
 
 # 4 spatial dimensions
 function allen_cahn(strategy, minimizer, maxIters)
@@ -95,7 +95,7 @@ function allen_cahn(strategy, minimizer, maxIters)
     res = GalacticOptim.solve(prob, minimizer; cb = cb, maxiters=maxIters) #allow_f_increase = false,
 
     t_f = time_ns()
-    training_time = t_f - t_0
+    training_time = (t_f - t_0)/10^9
     #print(string("Training time = ",(t_f - t_0)/10^9))
 
     phi = discretization.phi
@@ -107,3 +107,18 @@ function allen_cahn(strategy, minimizer, maxIters)
 
     return [losses, u_predict, u_predict, domain, training_time] #add numeric solution
 end
+
+
+
+## Numerical Part
+# Starting here with the 1-D
+
+"""
+using Gridap
+using ForwardDiff
+using GridapODEs.ODETools
+using GridapODEs.TransientFETools
+
+import Gridap: ∇
+import GridapODEs.TransientFETools: ∂t
+"""
