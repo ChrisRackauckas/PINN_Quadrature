@@ -112,7 +112,7 @@ end
 
 ## Numerical Part
 
-
+"""
 # Parameters, variables, and derivatives
 @parameters  t x1 x2 x3 x4
 @variables   u(..)
@@ -169,7 +169,7 @@ order = 2
 discretization = MOLFiniteDifference([dx1,dx2,dx3,dx4],order)
 
 # Convert the PDE problem into an ODE problem
-prob = discretize(pdesys,discretization)
+prob = DiffEqOperators.discretize(pdesys,discretization)
 
 # Solve ODE problem
 using OrdinaryDiffEq
@@ -178,3 +178,33 @@ sol = solve(prob,Tsit5(),saveat=0.2)
 # Plot results and compare with exact solution
 x = prob.space[2]
 t = sol.t
+
+"""
+## Manually Constructing 4D Laplacian
+## ref: https://github.com/SciML/DiffEqOperators.jl/blob/master/test/3D_laplacian.jl 
+
+s = x1, x2, x3, x4 = (-5:0.2:5, -5:0.2:5, -5:0.2:5, -5:0.2:5)
+dx1 = dx2 = dx3 = dx4 = x[2] - x[1]
+
+ricker(x1::T, x2::T, x3::T, x4 ::T) where T = (4*(x1^2+x2^2+x3^2 +x4^2) - 6)*exp(-(x1^2+x2^2+x3^2 +x4^2))
+
+u0 = [ricker(X1, X2, X3, X4) for X4 in x4, X3 in x3, X2 in x2, X1 in x1]
+
+Dxx1 = CenteredDifference{1}(2, 4, dx1, length(x1))
+Dxx2 = CenteredDifference{1}(2, 4, dx2, length(x2))
+Dxx3 = CenteredDifference{1}(2, 4, dx3, length(x3))
+Dxx4 = CenteredDifference{1}(2, 4, dx4, length(x4))
+
+A = Dxx1 + Dxx2 + Dxx3 + Dxx4
+Q = compose(Dirichlet0BC(Float64, length.(s))...)
+
+dt = dx/(sqrt(3)*3e8)
+t = 0.0:dt:10/3e8
+
+f(u,p,t) = (3e8)^2 .*(A*Q*u) #.+u .-u^3
+
+using OrdinaryDiffEq
+
+prob = ODEProblem(f, u0, (0., 0.5))
+
+solve(prob,Tsit5(),abstol=1e-6,reltol=1e-6);
