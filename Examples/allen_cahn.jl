@@ -5,11 +5,11 @@ using Plots
 using PyPlot
 using DelimitedFiles
 using QuasiMonteCarlo
-using LinearAlgebra
+using DiffEqOperators
 
 print("Precompiling Done")
 
-losses, u_predict, u_predict, domain, training_time = allen_cahn(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 100)
+#losses, u_predict, u_predict, domain, training_time = allen_cahn(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 100)
 
 # 4 spatial dimensions
 function allen_cahn(strategy, minimizer, maxIters)
@@ -111,14 +111,70 @@ end
 
 
 ## Numerical Part
-# Starting here with the 1-D
 
-"""
-using Gridap
-using ForwardDiff
-using GridapODEs.ODETools
-using GridapODEs.TransientFETools
 
-import Gridap: ∇
-import GridapODEs.TransientFETools: ∂t
-"""
+# Parameters, variables, and derivatives
+@parameters  t x1 x2 x3 x4
+@variables   u(..)
+
+@derivatives Dt'~t
+
+@derivatives Dxx1''~x1
+@derivatives Dxx2''~x2
+@derivatives Dxx3''~x3
+@derivatives Dxx4''~x4
+
+# Operators
+Δu = Dxx1(u(t,x1,x2,x3,x4)) + Dxx2(u(t,x1,x2,x3,x4)) + Dxx3(u(t,x1,x2,x3,x4)) + Dxx4(u(t,x1,x2,x3,x4)) # Laplacian
+
+# Equation
+eq = Dt(u(t,x1,x2,x3,x4)) - Δu - u(t,x1,x2,x3,x4) + u(t,x1,x2,x3,x4)*u(t,x1,x2,x3,x4)*u(t,x1,x2,x3,x4) ~ 0  #LEVEL SET EQUATION
+
+initialCondition =  1/(2 + 0.4 * (x1*x1 + x2*x2 + x3*x3 + x4*x4)) # see PNAS paper
+bcs = [u(0,x1,x2,x3,x4) ~ initialCondition,
+       u(t,0,0,0,0) ~ 0.5,
+       u(t,1,1,1,1) ~ 1/2.4]  #from literature
+
+# Discretization
+tmax         = 1.0
+x1width      = 1.0
+x2width      = 1.0
+x3width      = 1.0
+x4width      = 1.0
+
+tMeshNum     = 10
+x1MeshNum    = 10
+x2MeshNum    = 10
+x3MeshNum    = 10
+x4MeshNum    = 10
+
+dt   = tmax/tMeshNum
+dx1  = x1width/x1MeshNum
+dx2  = x2width/x2MeshNum
+dx3  = x3width/x3MeshNum
+dx4  = x4width/x4MeshNum
+
+# Space and time domains
+domains = [t ∈ IntervalDomain(0.0,tmax),
+           x1 ∈ IntervalDomain(0.0,x1width),
+           x2 ∈ IntervalDomain(0.0,x2width),
+           x3 ∈ IntervalDomain(0.0,x3width),
+           x4 ∈ IntervalDomain(0.0,x4width)]
+
+# PDE system
+pdesys = PDESystem(eq,bcs,domains,[t,x1,x2,x3,x4],[u])
+
+# Method of lines discretization
+order = 2
+discretization = MOLFiniteDifference([dx1,dx2,dx3,dx4],order)
+
+# Convert the PDE problem into an ODE problem
+prob = discretize(pdesys,discretization)
+
+# Solve ODE problem
+using OrdinaryDiffEq
+sol = solve(prob,Tsit5(),saveat=0.2)
+
+# Plot results and compare with exact solution
+x = prob.space[2]
+t = sol.t
