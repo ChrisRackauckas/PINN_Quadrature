@@ -181,8 +181,8 @@ t = sol.t
 
 """
 ## Manually Constructing 4D Laplacian
-## ref: https://github.com/SciML/DiffEqOperators.jl/blob/master/test/3D_laplacian.jl 
-
+## ref: https://github.com/SciML/DiffEqOperators.jl/blob/master/test/3D_laplacian.jl
+"""
 s = x1, x2, x3, x4 = (-5:0.2:5, -5:0.2:5, -5:0.2:5, -5:0.2:5)
 dx1 = dx2 = dx3 = dx4 = x[2] - x[1]
 
@@ -208,3 +208,4 @@ using OrdinaryDiffEq
 prob = ODEProblem(f, u0, (0., 0.5))
 
 solve(prob,Tsit5(),abstol=1e-6,reltol=1e-6);
+"""
