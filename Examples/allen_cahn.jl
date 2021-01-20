@@ -7,7 +7,6 @@ using PyPlot
 
 print("Precompiling Done")
 
-#losses, u_predict, u_predict, domain, training_time = allen_cahn(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 100)
 
 # 4 spatial dimensions
 function allen_cahn(strategy, minimizer, maxIters)
@@ -107,9 +106,10 @@ function allen_cahn(strategy, minimizer, maxIters)
 end
 
 
+#losses, u_predict, u_predict, domain, training_time = allen_cahn(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 500)
 
 ## Numerical Part
-
+#=
 """
 # Parameters, variables, and derivatives
 @parameters  t x1 x2 x3 x4
@@ -207,3 +207,4 @@ prob = ODEProblem(f, u0, (0., 0.5))
 
 solve(prob,Tsit5(),abstol=1e-6,reltol=1e-6);
 """
+=#

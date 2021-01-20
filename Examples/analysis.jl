@@ -7,11 +7,11 @@ using Plots
 include("./nernst_planck_3D.jl")
 include("./level_set.jl")
 include("./allen_cahn.jl")
+include("./hamilton_jacobi.jl")
 
-#include("./schrodinger.jl")
 
 # Settings:
-maxIters   = 3  #number of iterations
+maxIters   = 100  #number of iterations
 
 
 strategies = [NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100),

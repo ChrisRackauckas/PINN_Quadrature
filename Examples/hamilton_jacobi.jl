@@ -5,8 +5,6 @@ using Plots
 using PyPlot
 
 
-#losses, u_predict, u_predict, domain, training_time = hamilton_jacobi(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 1000), GalacticOptim.ADAM(0.01), 100)
-
 
 function hamilton_jacobi(strategy, minimizer, maxIters)
 
@@ -110,3 +108,5 @@ function hamilton_jacobi(strategy, minimizer, maxIters)
 
     return [losses, u_predict, u_predict, domain, training_time] #add numeric solution
 end
+
+#losses, u_predict, u_predict, domain, training_time = hamilton_jacobi(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 1000), GalacticOptim.ADAM(0.01), 500)
