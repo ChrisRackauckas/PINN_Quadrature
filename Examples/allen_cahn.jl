@@ -3,13 +3,10 @@ using Quadrature, Cubature, Cuba
 using Flux, ModelingToolkit, GalacticOptim, Optim, DiffEqFlux
 using Plots
 using PyPlot
-using DelimitedFiles
-using QuasiMonteCarlo
-using LinearAlgebra
+
 
 print("Precompiling Done")
 
-#allen_cahn(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 300)
 
 # 4 spatial dimensions
 function allen_cahn(strategy, minimizer, maxIters)
@@ -95,7 +92,7 @@ function allen_cahn(strategy, minimizer, maxIters)
     res = GalacticOptim.solve(prob, minimizer; cb = cb, maxiters=maxIters) #allow_f_increase = false,
 
     t_f = time_ns()
-    training_time = t_f - t_0
+    training_time = (t_f - t_0)/10^9
     #print(string("Training time = ",(t_f - t_0)/10^9))
 
     phi = discretization.phi
@@ -107,3 +104,107 @@ function allen_cahn(strategy, minimizer, maxIters)
 
     return [losses, u_predict, u_predict, domain, training_time] #add numeric solution
 end
+
+
+#losses, u_predict, u_predict, domain, training_time = allen_cahn(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 500)
+
+## Numerical Part
+#=
+"""
+# Parameters, variables, and derivatives
+@parameters  t x1 x2 x3 x4
+@variables   u(..)
+
+@derivatives Dt'~t
+
+@derivatives Dxx1''~x1
+@derivatives Dxx2''~x2
+@derivatives Dxx3''~x3
+@derivatives Dxx4''~x4
+
+# Operators
+Δu = Dxx1(u(t,x1,x2,x3,x4)) + Dxx2(u(t,x1,x2,x3,x4)) + Dxx3(u(t,x1,x2,x3,x4)) + Dxx4(u(t,x1,x2,x3,x4)) # Laplacian
+
+# Equation
+eq = Dt(u(t,x1,x2,x3,x4)) - Δu - u(t,x1,x2,x3,x4) + u(t,x1,x2,x3,x4)*u(t,x1,x2,x3,x4)*u(t,x1,x2,x3,x4) ~ 0  #LEVEL SET EQUATION
+
+initialCondition =  1/(2 + 0.4 * (x1*x1 + x2*x2 + x3*x3 + x4*x4)) # see PNAS paper
+bcs = [u(0,x1,x2,x3,x4) ~ initialCondition,
+       u(t,0,0,0,0) ~ 0.5,
+       u(t,1,1,1,1) ~ 1/2.4]  #from literature
+
+# Discretization
+tmax         = 1.0
+x1width      = 1.0
+x2width      = 1.0
+x3width      = 1.0
+x4width      = 1.0
+
+tMeshNum     = 10
+x1MeshNum    = 10
+x2MeshNum    = 10
+x3MeshNum    = 10
+x4MeshNum    = 10
+
+dt   = tmax/tMeshNum
+dx1  = x1width/x1MeshNum
+dx2  = x2width/x2MeshNum
+dx3  = x3width/x3MeshNum
+dx4  = x4width/x4MeshNum
+
+# Space and time domains
+domains = [t ∈ IntervalDomain(0.0,tmax),
+           x1 ∈ IntervalDomain(0.0,x1width),
+           x2 ∈ IntervalDomain(0.0,x2width),
+           x3 ∈ IntervalDomain(0.0,x3width),
+           x4 ∈ IntervalDomain(0.0,x4width)]
+
+# PDE system
+pdesys = PDESystem(eq,bcs,domains,[t,x1,x2,x3,x4],[u])
+
+# Method of lines discretization
+order = 2
+discretization = MOLFiniteDifference([dx1,dx2,dx3,dx4],order)
+
+# Convert the PDE problem into an ODE problem
+prob = DiffEqOperators.discretize(pdesys,discretization)
+
+# Solve ODE problem
+using OrdinaryDiffEq
+sol = solve(prob,Tsit5(),saveat=0.2)
+
+# Plot results and compare with exact solution
+x = prob.space[2]
+t = sol.t
+
+"""
+## Manually Constructing 4D Laplacian
+## ref: https://github.com/SciML/DiffEqOperators.jl/blob/master/test/3D_laplacian.jl
+"""
+s = x1, x2, x3, x4 = (-5:0.2:5, -5:0.2:5, -5:0.2:5, -5:0.2:5)
+dx1 = dx2 = dx3 = dx4 = x[2] - x[1]
+
+ricker(x1::T, x2::T, x3::T, x4 ::T) where T = (4*(x1^2+x2^2+x3^2 +x4^2) - 6)*exp(-(x1^2+x2^2+x3^2 +x4^2))
+
+u0 = [ricker(X1, X2, X3, X4) for X4 in x4, X3 in x3, X2 in x2, X1 in x1]
+
+Dxx1 = CenteredDifference{1}(2, 4, dx1, length(x1))
+Dxx2 = CenteredDifference{1}(2, 4, dx2, length(x2))
+Dxx3 = CenteredDifference{1}(2, 4, dx3, length(x3))
+Dxx4 = CenteredDifference{1}(2, 4, dx4, length(x4))
+
+A = Dxx1 + Dxx2 + Dxx3 + Dxx4
+Q = compose(Dirichlet0BC(Float64, length.(s))...)
+
+dt = dx/(sqrt(3)*3e8)
+t = 0.0:dt:10/3e8
+
+f(u,p,t) = (3e8)^2 .*(A*Q*u) #.+u .-u^3
+
+using OrdinaryDiffEq
+
+prob = ODEProblem(f, u0, (0., 0.5))
+
+solve(prob,Tsit5(),abstol=1e-6,reltol=1e-6);
+"""
+=#

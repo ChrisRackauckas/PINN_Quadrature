@@ -8,8 +8,6 @@ using QuasiMonteCarlo
 
 print("Precompiling Done")
 
-#level_set(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 30)
-
 function level_set(strategy, minimizer, maxIters)
 
     ##  DECLARATIONS
@@ -104,3 +102,5 @@ function level_set(strategy, minimizer, maxIters)
 
     return [losses, u_predict, u_predict, domain, training_time] #add numeric solution
 end
+
+#level_set(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 500)

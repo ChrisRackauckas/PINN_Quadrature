@@ -2,16 +2,16 @@
 #/////////////////////////////////////////////////////////////////////////////////
 # INTERFACE TO RUN MUPLTIPLE EXAMPLES WITH DIFFERENT STRATEGIES / SETTINGS
 #/////////////////////////////////////////////////////////////////////////////////
-
+using Plots
 # Import all the examples
 include("./nernst_planck_3D.jl")
 include("./level_set.jl")
 include("./allen_cahn.jl")
+include("./hamilton_jacobi.jl")
 
-#include("./schrodinger.jl")
 
 # Settings:
-maxIters   = 3  #number of iterations
+maxIters   = 100  #number of iterations
 
 
 strategies = [NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100),
@@ -66,7 +66,7 @@ for strat=1:5#length(strategies) # strategy
       end
 end
 Plots.bar(collect(keys(benchmark_res_name)), collect(values(benchmark_res_name)), title = string("Nernst-Planck"), xrotation = 90)
-savefig("Nernst-Planck_time.pdf")
+Plots.savefig("Nernst-Planck_time.pdf")
 
 
 ## Convergence
@@ -80,7 +80,7 @@ for strat=2:5#length(strategies) # strategy
             Plots.plot!(1:(maxIters + 1), losses_res[string(strat,min)], yaxis=:log10, title = string("Nernst-Planck"), ylabel = "log(loss)", legend = true)
       end
 end
-savefig("Nernst-Planck_loss.pdf")
+Plots.savefig("Nernst-Planck_loss.pdf")
 
 
 ## Comparison Predicted solution vs Numerical solution

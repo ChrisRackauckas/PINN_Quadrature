@@ -8,8 +8,6 @@ using QuasiMonteCarlo
 
 print("Precompiling Done")
 
-nernst_planck(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(),reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 3)
-
 function nernst_planck(strategy, minimizer, maxIters)
 
     ##  DECLARATIONS
@@ -106,3 +104,5 @@ function nernst_planck(strategy, minimizer, maxIters)
 
     return [losses, u_predict, u_predict, domain, training_time] #add numeric solution
 end
+
+#nernst_planck(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(),reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 500)
