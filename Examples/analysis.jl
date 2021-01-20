@@ -11,7 +11,7 @@ include("./hamilton_jacobi.jl")
 
 
 # Settings:
-maxIters   = 100  #number of iterations
+maxIters   = 10  #number of iterations
 
 
 strategies = [NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100),
@@ -24,8 +24,8 @@ strategies = [NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-
                                                      number_of_points = 100,
                                                      number_of_minibatch = 100)]
 
-strategies_short_name = ["CubaCuhre", "HCubatureJL", "CubatureJLh", "CubatureJLp", "GridTraining", "StochasticTraining",
-                         "QuasiRandomTraining"]
+strategies_short_name = ["CubaCuhre", "HCubatureJL", "CubatureJLh", "CubatureJLp", "StochasticTraining",
+                         "QuasiRandomTraining"] #"GridTraining" prima di stochastic
 
 minimizers = [GalacticOptim.ADAM(0.01), GalacticOptim.BFGS(), GalacticOptim.LBFGS()]
 
@@ -42,7 +42,7 @@ for strat=1:length(strategies) # strategy
       for min =1:length(minimizers) # minimizer
             t_0 = time_ns()
             #println(string(strategies[strat], minimizers[min]))
-            res = nernst_planck(strategies[strat], minimizers[min], maxIters)
+            res = level_set(strategies[strat], minimizers[min], maxIters)
             push!(losses_res, string(strat,min)     => res[1])
             push!(prediction_res, string(strat,min) => res[2])
             push!(numeric_res, string(strat,min)    => res[3])
@@ -55,7 +55,7 @@ end
 
 
 #////////////////////////////////////////
-# ANALYSIS OF RESULTS: NERNST-PLANCK 3D
+# ANALYSIS OF RESULTS: LEVEL-SET
 #////////////////////////////////////////
 
 ## Time Benchmark
@@ -65,22 +65,22 @@ for strat=1:5#length(strategies) # strategy
             push!(benchmark_res_name, string(strategies_short_name[strat], " + " , minimizers_short_name[min]) => benchmark_res[string(strat,min)])
       end
 end
-Plots.bar(collect(keys(benchmark_res_name)), collect(values(benchmark_res_name)), title = string("Nernst-Planck"), xrotation = 90)
-Plots.savefig("Nernst-Planck_time.pdf")
+Plots.bar(collect(keys(benchmark_res_name)), collect(values(benchmark_res_name)), title = string("Level_set"), xrotation = 90)
+Plots.savefig("Level_set.pdf")
 
 
 ## Convergence
 #Plotting the first strategy with the first minimizer out from the loop to initialize the canvas
 current_label = string("Strategy: ", strategies[1], "  Minimizer: ", minimizers[1])
-Plots.plot(1:(maxIters + 1), losses_res["11"], yaxis=:log10, title = string("Nernst-Planck"), ylabel = "log(loss)", legend = true)
+Plots.plot(1:(maxIters + 1), losses_res["11"], yaxis=:log10, title = string("Level_set"), ylabel = "log(loss)", legend = true)
 for strat=2:5#length(strategies) # strategy
       for min =1:length(minimizers) # minimizer
             # Learning curve plots with different strategies, minimizer
             current_label = string("Strategy: ", strategies[strat], "  Minimizer: ", minimizers[min])
-            Plots.plot!(1:(maxIters + 1), losses_res[string(strat,min)], yaxis=:log10, title = string("Nernst-Planck"), ylabel = "log(loss)", legend = true)
+            Plots.plot!(1:(maxIters + 1), losses_res[string(strat,min)], yaxis=:log10, title = string("Level_set"), ylabel = "log(loss)", legend = true)
       end
 end
-Plots.savefig("Nernst-Planck_loss.pdf")
+Plots.savefig("Level_set_loss.pdf")
 
 
 ## Comparison Predicted solution vs Numerical solution
