@@ -59,7 +59,7 @@ function allen_cahn(strategy, minimizer, maxIters)
 
 
     # Equation
-    eq = Dt(u(t,x1,x2,x3,x4)) - Δu - u(t,x1,x2,x3,x4) + u(t,x1,x2,x3,x4)*u(t,x1,x2,x3,x4)*u(t,x1,x2,x3,x4) ~ 0  #LEVEL SET EQUATION
+    eq = Dt(u(t,x1,x2,x3,x4)) - Δu - u(t,x1,x2,x3,x4) + u(t,x1,x2,x3,x4)*u(t,x1,x2,x3,x4)*u(t,x1,x2,x3,x4) ~ 0  #ALLEN CAHN EQUATION
 
     initialCondition =  1/(2 + 0.4 * (x1*x1 + x2*x2 + x3*x3 + x4*x4)) # see PNAS paper
 

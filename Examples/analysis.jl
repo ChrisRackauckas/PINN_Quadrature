@@ -11,7 +11,7 @@ include("./hamilton_jacobi.jl")
 
 
 # Settings:
-maxIters   = 10  #number of iterations
+maxIters   = 5  #number of iterations
 
 
 strategies = [NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100),
@@ -24,8 +24,8 @@ strategies = [NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-
                                                      number_of_points = 100,
                                                      number_of_minibatch = 100)]
 
-strategies_short_name = ["CubaCuhre", "HCubatureJL", "CubatureJLh", "CubatureJLp", "StochasticTraining",
-                         "QuasiRandomTraining"] #"GridTraining" prima di stochastic
+strategies_short_name = ["CubaCuhre", "HCubatureJL", "CubatureJLh", "CubatureJLp", "GridTraining", "StochasticTraining",
+                         "QuasiRandomTraining"]
 
 minimizers = [GalacticOptim.ADAM(0.01), GalacticOptim.BFGS(), GalacticOptim.LBFGS()]
 
@@ -60,7 +60,7 @@ end
 
 ## Time Benchmark
 benchmark_res_name = Dict()
-for strat=1:5#length(strategies) # strategy
+for strat=1:length(strategies) # strategy
       for min =1:length(minimizers)
             push!(benchmark_res_name, string(strategies_short_name[strat], " + " , minimizers_short_name[min]) => benchmark_res[string(strat,min)])
       end
