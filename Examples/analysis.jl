@@ -42,7 +42,7 @@ for strat=1:length(strategies) # strategy
       for min =1:length(minimizers) # minimizer
             t_0 = time_ns()
             #println(string(strategies[strat], minimizers[min]))
-            res = level_set(strategies[strat], minimizers[min], maxIters)
+            res = allen_cahn(strategies[strat], minimizers[min], maxIters)
             push!(losses_res, string(strat,min)     => res[1])
             push!(prediction_res, string(strat,min) => res[2])
             push!(numeric_res, string(strat,min)    => res[3])
