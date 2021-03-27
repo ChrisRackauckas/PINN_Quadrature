@@ -1,4 +1,4 @@
-# Error checklist for examples and strategies
+# Checklist for examples and strategies
 <p>
 Strategy, algorithm, result, iterations, time, log(loss) about
 <p>
