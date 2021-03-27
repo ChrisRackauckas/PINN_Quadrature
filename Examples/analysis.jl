@@ -73,7 +73,7 @@ Plots.savefig("Level_set.pdf")
 #Plotting the first strategy with the first minimizer out from the loop to initialize the canvas
 current_label = string("Strategy: ", strategies[1], "  Minimizer: ", minimizers[1])
 Plots.plot(1:(maxIters + 1), losses_res["11"], yaxis=:log10, title = string("Level_set"), ylabel = "log(loss)", legend = true)
-for strat=2:5#length(strategies) # strategy
+for strat=2:length(strategies) # strategy
       for min =1:length(minimizers) # minimizer
             # Learning curve plots with different strategies, minimizer
             current_label = string("Strategy: ", strategies[strat], "  Minimizer: ", minimizers[min])
