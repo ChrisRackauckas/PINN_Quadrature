@@ -2,7 +2,8 @@
 <p>
 Strategy, algorithm, result, iterations, time, log(loss) about
 <p>
-## Level-set 3D (ADAM 0.001)
+  
+## Level-set 3D (ADAM 0.001)  {3>16>1}
 - QuadratureTraining CubaCuhre **[OK]** 2000 / 553 s / 10^-5
 - QuadratureTraining HCubatureJL **[OK]** 2000 / 456 s / 10^-5.3
 - QuadratureTraining CubatureJLh **[OK]** 2000 / 462 s / 10^-5.3
@@ -11,7 +12,7 @@ Strategy, algorithm, result, iterations, time, log(loss) about
 - GridTraining **[Extremely slow]** 
 - QuasiRandomTraining Uniform Sampling **[OK]** 2000 / 338 s / 10^-3.1
 
-## Allen-Cahn 5D (ADAM 0.02)
+## Allen-Cahn 5D (ADAM 0.02)  {5>20>1}
 - QuadratureTraining CubaCuhre **[OK]** 1000 / 596 s / 8.5*10^-9
 - QuadratureTraining HCubatureJL **[OK]** 1000 / 262 s / 8.5 * 10^-9
 - QuadratureTraining CubatureJLh **[OK]** 1000 / 240 s / 8.0 * 10^-9 
@@ -20,7 +21,7 @@ Strategy, algorithm, result, iterations, time, log(loss) about
 - GridTraining **[Extremely slow]** 
 - QuasiRandomTraining Uniform Sampling **[OK]** 1000 / 265 s / 6.3 * 10^-5
 
-## Hamilton-Jacobi 5D (ADAM 0.004)
+## Hamilton-Jacobi 5D (ADAM 0.004)  {5>20>1}
 - QuadratureTraining CubaCuhre **[OK]** 500 / 453 s / 3.9 * 10^-6
 - QuadratureTraining HCubatureJL **[OK]** 500 / 218 s / 4.3 * 10^-7
 - QuadratureTraining CubatureJLh **[OK]** 500 / 222 s / 4.3 * 10^-7
