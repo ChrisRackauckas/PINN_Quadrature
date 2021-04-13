@@ -5,8 +5,8 @@ using Plots
 #using PyPlot
 import Base.Broadcast
 import ModelingToolkit: value, nameof, toexpr, build_expr, expand_derivatives
-
-
+using RuntimeGeneratedFunctions, BenchmarkTools
+RuntimeGeneratedFunctions.init(@__MODULE__)
 strategy = NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100)
 minimizer = GalacticOptim.ADAM(0.01)
 maxIters = 30
@@ -74,6 +74,7 @@ terminalCondition =  log((1 + x1*x1 + x2*x2 + x3*x3 + x4*x4)/2) # see PNAS paper
 
 bcs = [u(tmax,x1,x2,x3,x4) ~ terminalCondition]  #PNAS paper again
 
+
 ## NEURAL NETWORK
 n = 20   #neuron number
 
@@ -90,7 +91,8 @@ dim = length(domains)
 losses = []
 cb = function (p,l)     #loss function handling
 
-    ref_metric=strategy
+    grid_res = 0.1
+    ref_metric = NeuralPDE.GridTraining(grid_res)
 
     phi = NeuralPDE.get_phi(chain)
     derivative = NeuralPDE.get_numeric_derivative()
@@ -172,12 +174,236 @@ cb = function (p,l)     #loss function handling
     right_expr = Broadcast.__dot__(right_expr)
     loss_func = :($left_expr .- $right_expr)
 
-    function loss_function_(θ,p)
-        return pde_loss_function(θ) + bc_loss_function(θ)
+
+    function build_symbolic_loss_function(eqs,indvars,depvars,
+                                          dict_indvars,dict_depvars,
+                                          phi, derivative, initθ)#, strategy; eq_params = SciMLBase.NullParameters(), param_estim = param_estim,default_p=default_p,
+                                          #bc_indvars = indvars)
+        bc_indvars = indvars
+        strategy = ref_metric
+        eq_params = initθ #SciMLBase.NullParameters()
+        loss_function = loss_func #parse_equation(eqs,dict_indvars,dict_depvars,initθ,strategy)
+        vars = :(cord, $θ, phi, derivative,u,p)
+        ex = Expr(:block)
+        if length(depvars) != 1
+            θ_nums = Symbol[]
+            phi_nums = Symbol[]
+            for v in depvars
+                num = dict_depvars[v]
+                push!(θ_nums,:($(Symbol(:($θ),num))))
+                push!(phi_nums,:($(Symbol(:phi,num))))
+            end
+
+            expr_θ = Expr[]
+            expr_phi = Expr[]
+
+            acum =  [0;accumulate(+, length.(initθ))]
+            sep = [acum[i]+1 : acum[i+1] for i in 1:length(acum)-1]
+
+            for i in eachindex(depvars)
+                push!(expr_θ, :($θ[$(sep[i])]))
+                push!(expr_phi, :(phi[$i]))
+            end
+
+            vars_θ = Expr(:(=), build_expr(:tuple, θ_nums), build_expr(:tuple, expr_θ))
+            push!(ex.args,  vars_θ)
+
+            vars_phi = Expr(:(=), build_expr(:tuple, phi_nums), build_expr(:tuple, expr_phi))
+            push!(ex.args,  vars_phi)
+        end
+        #Add an expression for parameter symbols
+        #if param_estim == true && eq_params != SciMLBase.NullParameters()
+        param_len = length(eq_params)
+        last_indx =  [0;accumulate(+, length.(initθ))][end]
+        params_symbols = Symbol[]
+        expr_params = Expr[]
+        for (i , eq_param) in enumerate(eq_params)
+            push!(expr_params, :($θ[$(i+last_indx:i+last_indx)]))
+            push!(params_symbols, Symbol(:($eq_param)))
+        end
+        params_eq = Expr(:(=), build_expr(:tuple, params_symbols), build_expr(:tuple, expr_params))
+        push!(ex.args,  params_eq)
+        #end
+
+        #=if eq_params != SciMLBase.NullParameters() && param_estim == false
+            params_symbols = Symbol[]
+            expr_params = Expr[]
+            for (i , eq_param) in enumerate(eq_params)
+                push!(expr_params, :(ArrayInterface.allowed_getindex(p,$i:$i)))
+                push!(params_symbols, Symbol(:($eq_param)))
+            end
+            params_eq = Expr(:(=), build_expr(:tuple, params_symbols), build_expr(:tuple, expr_params))
+            push!(ex.args,  params_eq)
+        end
+=#
+        #=if strategy isa QuadratureTraining
+
+            indvars_ex = get_indvars_ex(bc_indvars)
+
+            left_arg_pairs, right_arg_pairs = indvars,indvars_ex
+            vcat_expr =  :(cord = vcat($(indvars...)))
+            vcat_expr_loss_functions = Expr(:block,vcat_expr,loss_function) #TODO rename
+            vars_eq = Expr(:(=), build_expr(:tuple, left_arg_pairs), build_expr(:tuple, right_arg_pairs))
+
+        else
+        =#
+        indvars_ex = [:($:cord[[$i],:]) for (i, u) ∈ enumerate(indvars)]
+        left_arg_pairs, right_arg_pairs = indvars,indvars_ex
+        vars_eq = Expr(:(=), build_expr(:tuple, left_arg_pairs), build_expr(:tuple, right_arg_pairs))
+        vcat_expr_loss_functions = loss_function #TODO rename
+        #end
+
+        let_ex = Expr(:let, vars_eq, vcat_expr_loss_functions)
+        push!(ex.args,  let_ex)
+
+        expr_loss_function = :(($vars) -> begin $ex end)
     end
 
+    function build_loss_function(eqs,_indvars,_depvars, phi, derivative,initθ)#,strategy;bc_indvars=nothing,eq_params=SciMLBase.NullParameters(),param_estim=false,default_p=nothing)
+        # dictionaries: variable -> unique number
+        depvars,indvars,dict_indvars,dict_depvars = get_vars(_indvars, _depvars)
+        bc_indvars = bc_indvars==nothing ? indvars : bc_indvars
+        return build_loss_function(eqs,indvars,depvars,
+                                   dict_indvars,dict_depvars,
+                                   phi, derivative,initθ)#,strategy,
+                                   #bc_indvars = bc_indvars, eq_params=eq_params,param_estim=param_estim,default_p=default_p)
+    end
+
+    function build_loss_function(eqs,indvars,depvars,
+                                 dict_indvars,dict_depvars,
+                                 phi, derivative, initθ)#, strategy;
+                                 #bc_indvars = indvars,eq_params=SciMLBase.NullParameters(),param_estim=false,default_p=nothing)
+         expr_loss_function = build_symbolic_loss_function(eqs,indvars,depvars,
+                                                           dict_indvars,dict_depvars,
+                                                           phi, derivative, initθ)#,strategy;
+                                                           #bc_indvars = bc_indvars,eq_params = eq_params,param_estim=param_estim,default_p=default_p)
+        function get_u()
+            u = (cord, θ, phi)-> phi(cord, θ)
+        end
+
+        u = get_u()
+        _loss_function = @RuntimeGeneratedFunction(expr_loss_function)
+        loss_function = (cord, θ) -> begin
+            _loss_function(cord, θ, phi, derivative, u, default_p)
+        end
+        return loss_function
+    end
+
+    _bc_loss_functions = [build_loss_function(bcs,indvars,depvars,
+                                                  dict_indvars,dict_depvars,
+                                                  phi, derivative, initθ)]#, strategy,eq_params=eq_params,param_estim=param_estim,default_p=default_p;
+                                                  #bc_indvars = bc_indvar) for (bc,bc_indvar) in zip(bcs,bc_indvars)]
+
+    _pde_loss_functions = [build_loss_function(eq,indvars,depvars,
+                                             dict_indvars,dict_depvars,
+                                             phi, derivative, initθ)]#,strategy,eq_params=eq_params,param_estim=param_estim,default_p=default_p) for eq in eqs]
+
+
+    function get_variables(eqs,_indvars::Array,_depvars::Array)
+        depvars,indvars,dict_indvars,dict_depvars = get_vars(_indvars, _depvars)
+        return get_variables(eqs,dict_indvars,dict_depvars)
+    end
+
+    function get_variables(eqs,dict_indvars,dict_depvars)
+        bc_args = get_argument(eqs,dict_indvars,dict_depvars)
+        return map(barg -> filter(x -> x isa Symbol, barg), bc_args)
+    end
+
+    function get_number(eqs,dict_indvars,dict_depvars)
+        bc_args = get_argument(eqs,dict_indvars,dict_depvars)
+        return map(barg -> filter(x -> x isa Number, barg), bc_args)
+    end
+
+    function find_thing_in_expr(ex::Expr, thing; ans = Expr[])
+        for e in ex.args
+            if e isa Expr
+                if thing in e.args
+                    push!(ans,e)
+                end
+                find_thing_in_expr(e,thing; ans=ans)
+            end
+        end
+        return collect(Set(ans))
+    end
+
+    # Get arguments from boundary condition functions
+    function get_argument(eqs,_indvars::Array,_depvars::Array)
+        depvars,indvars,dict_indvars,dict_depvars = get_vars(_indvars, _depvars)
+        get_argument(eqs,dict_indvars,dict_depvars)
+    end
+    function get_argument(eqs,dict_indvars,dict_depvars)
+        exprs = toexpr.(eqs)
+        vars = map(exprs) do expr
+            _vars =  map(depvar -> find_thing_in_expr(expr,  depvar), collect(keys(dict_depvars)))
+            f_vars = filter(x -> !isempty(x), _vars)
+            map(x -> first(x), f_vars)
+        end
+        args_ = map(vars) do _vars
+            map(var -> var.args[2:end] , _vars)
+        end
+        return first.(args_) #TODO for all arguments
+    end
+
+
+    function generate_training_sets(domains,dx,eqs,bcs,dict_indvars::Dict,dict_depvars::Dict)
+        if dx isa Array
+            dxs = dx
+        else
+            dxs = fill(dx,length(domains))
+        end
+
+        spans = [d.domain.lower:dx:d.domain.upper for (d,dx) in zip(domains,dxs)]
+        dict_var_span = Dict([Symbol(d.variables) => d.domain.lower:dx:d.domain.upper for (d,dx) in zip(domains,dxs)])
+
+        bound_args = get_argument(bcs,dict_indvars,dict_depvars)
+        bound_vars = get_variables(bcs,dict_indvars,dict_depvars)
+
+        dif = [Float32[] for i=1:size(domains)[1]]
+        for _args in bound_args
+            for (i,x) in enumerate(_args)
+                if x isa Number
+                    push!(dif[i],x)
+                end
+            end
+        end
+        cord_train_set = collect.(spans)
+        bc_data = map(zip(dif,cord_train_set)) do (d,c)
+            setdiff(c, d)
+        end
+
+        dict_var_span_ = Dict([Symbol(d.variables) => bc for (d,bc) in zip(domains,bc_data)])
+
+        bcs_train_sets = map(bound_args) do bt
+            span = map(b -> get(dict_var_span, b, b), bt)
+            _set = Float32.(hcat(vec(map(points -> collect(points), Iterators.product(span...)))...))
+        end
+
+        pde_vars = get_variables(eqs,dict_indvars,dict_depvars)
+        pde_args = get_argument(eqs,dict_indvars,dict_depvars)
+
+        pde_train_set = Float32.(hcat(vec(map(points -> collect(points), Iterators.product(bc_data...)))...))
+
+        pde_train_sets = map(pde_args) do bt
+            span = map(b -> get(dict_var_span_, b, b), bt)
+            _set = Float32.(hcat(vec(map(points -> collect(points), Iterators.product(span...)))...))
+        end
+        [pde_train_sets,bcs_train_sets]
+    end
+
+
+    train_sets = generate_training_sets(domains,grid_res,eq,bcs,get_dict_vars(indvars),get_dict_vars(depvars))
+    train_domain_set, train_bound_set = train_sets
+
+
+    pde_loss_function = NeuralPDE.get_loss_function(_pde_loss_function,
+                        train_domain_set)
+
+    bc_loss_function = NeuralPDE.get_loss_function(_bc_loss_functions,
+                        train_bound_set)
+
+    metric = pde_loss_function + bc_loss_function
     #append!(losses, loss_func)
-    println("Current loss is: $l  uniform error is: $loss_func")
+    println("Current loss is: $l  uniform error is: $metric")
     return false
 end
 
