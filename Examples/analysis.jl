@@ -11,25 +11,25 @@ include("./hamilton_jacobi.jl")
 
 
 # Settings:
-maxIters   = 5  #number of iterations
+maxIters   = 100  #number of iterations
 
 
 strategies = [NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100),
-              NeuralPDE.QuadratureTraining(algorithm = HCubatureJL(), reltol = 1e-8, abstol = 1e-8, maxiters = 100),
-              NeuralPDE.QuadratureTraining(algorithm = CubatureJLh(), reltol = 1e-8, abstol = 1e-8, maxiters = 100),
-              NeuralPDE.QuadratureTraining(algorithm = CubatureJLp(), reltol = 1e-8, abstol = 1e-8, maxiters = 100),
-              NeuralPDE.GridTraining(),
-              NeuralPDE.StochasticTraining(),
+              #NeuralPDE.QuadratureTraining(algorithm = HCubatureJL(), reltol = 1e-8, abstol = 1e-8, maxiters = 100),
+              #NeuralPDE.QuadratureTraining(algorithm = CubatureJLh(), reltol = 1e-8, abstol = 1e-8, maxiters = 100),
+              #NeuralPDE.QuadratureTraining(algorithm = CubatureJLp(), reltol = 1e-8, abstol = 1e-8, maxiters = 100),
+              #NeuralPDE.GridTraining(),
+              #NeuralPDE.StochasticTraining(),
               NeuralPDE.QuasiRandomTraining(sampling_method = UniformSample(),
                                                      number_of_points = 100,
                                                      number_of_minibatch = 100)]
 
-strategies_short_name = ["CubaCuhre", "HCubatureJL", "CubatureJLh", "CubatureJLp", "GridTraining", "StochasticTraining",
+strategies_short_name = ["CubaCuhre", #"HCubatureJL", "CubatureJLh", "CubatureJLp", "GridTraining", "StochasticTraining",
                          "QuasiRandomTraining"]
 
-minimizers = [GalacticOptim.ADAM(0.01), GalacticOptim.BFGS(), GalacticOptim.LBFGS()]
+minimizers = [GalacticOptim.ADAM(0.01)]#, GalacticOptim.BFGS(), GalacticOptim.LBFGS()]
 
-minimizers_short_name = ["ADAM", "BFGS", "LBFGS"]
+minimizers_short_name = ["ADAM"]#, "BFGS", "LBFGS"]
 
 # Run models
 numeric_res = Dict()
@@ -65,14 +65,15 @@ for strat=1:length(strategies) # strategy
             push!(benchmark_res_name, string(strategies_short_name[strat], " + " , minimizers_short_name[min]) => benchmark_res[string(strat,min)])
       end
 end
-Plots.bar(collect(keys(benchmark_res_name)), collect(values(benchmark_res_name)), title = string("Level_set"), xrotation = 90)
-Plots.savefig("Level_set.pdf")
+bar = Plots.bar(collect(keys(benchmark_res_name)), collect(values(benchmark_res_name)), title = string("Level_set"), yrotation = 0, orientation= :horizontal)
+Plots.savefig("Allen_Cahn.pdf")
 
 
-## Convergence
+## Convergence : run line 75 without "!" then run line after, then re-run line 75 with "!"
 #Plotting the first strategy with the first minimizer out from the loop to initialize the canvas
 current_label = string("Strategy: ", strategies[1], "  Minimizer: ", minimizers[1])
-Plots.plot(1:(maxIters + 1), losses_res["11"], yaxis=:log10, title = string("Level_set"), ylabel = "log(loss)", legend = true)
+cla()
+losses = Plots.plot(1:(maxIters + 1), losses_res["11"], yaxis=:log10, title = string("Level_set"), ylabel = "log(loss)", legend = true)
 for strat=2:length(strategies) # strategy
       for min =1:length(minimizers) # minimizer
             # Learning curve plots with different strategies, minimizer
@@ -80,7 +81,10 @@ for strat=2:length(strategies) # strategy
             Plots.plot!(1:(maxIters + 1), losses_res[string(strat,min)], yaxis=:log10, title = string("Level_set"), ylabel = "log(loss)", legend = true)
       end
 end
+Plots.plot!(1:(maxIters + 1), losses_res["11"], yaxis=:log10, title = string("Level_set"), ylabel = "log(loss)", legend = true)
 Plots.savefig("Level_set_loss.pdf")
+
+Plots.plot(losses,bar)
 
 
 ## Comparison Predicted solution vs Numerical solution
