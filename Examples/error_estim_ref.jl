@@ -430,3 +430,5 @@ u_predict = [reshape([first(phi([t,x1,x2,x3,x4],res.minimizer)) for x1 in x1s fo
 
 losses, u_predict, u_predict, domain, training_time = hamilton_jacobi(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100),
                                                       GalacticOptim.ADAM(0.01), 500)
+
+exprs = toexpr(eq)
