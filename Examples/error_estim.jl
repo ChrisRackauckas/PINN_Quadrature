@@ -2,15 +2,13 @@ using NeuralPDE
 using Quadrature, Cubature, Cuba
 using Flux, ModelingToolkit, GalacticOptim, Optim, DiffEqFlux
 using Plots
-#using PyPlot
-#import Base.Broadcast
-#import ModelingToolkit: value, nameof, toexpr, build_expr, expand_derivatives
-using RuntimeGeneratedFunctions, BenchmarkTools
-#RuntimeGeneratedFunctions.init(@__MODULE__)
+using BenchmarkTools, CUDA
+
+CUDA.allowscalar(false)
 
 strategy = NeuralPDE.QuadratureTraining(quadrature_alg = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100, batch=100) #use algorithm for older versions
 minimizer = GalacticOptim.ADAM(0.01)
-maxIters = 30
+maxIters = 1000
 
 #function hamilton_jacobi(strategy, minimizer, maxIters)
 
@@ -90,13 +88,15 @@ bcs = [u(tmax,x1,x2,x3,x4) ~ terminalCondition]  #PNAS paper again
 ## NEURAL NETWORK
 n = 20   #neuron number
 
-chain = FastChain(FastDense(5,n,Flux.σ),FastDense(n,n,Flux.σ),FastDense(n,1))   #Neural network from Flux library
+chain = FastChain(FastDense(5,n,Flux.σ),FastDense(n,n,Flux.σ),FastDense(n,1)) |> gpu  #Neural network from Flux library
+initθ = DiffEqFlux.initial_params(chain) |> gpu
 
 discretization = NeuralPDE.PhysicsInformedNN(chain, strategy) #Discretization used for training
 #dx = 0.1
 #ref_dscr = NeuralPDE.PhysicsInformedNN(chain, NeuralPDE.GridTraining(dx)) #Discretization used for error estimation
 
 indvars = [t,x1,x2,x3,x4]   #phisically independent variables
+
 depvars = [u]       #dependent (target) variable
 
 dim = length(domains)
@@ -126,6 +126,7 @@ pde_train_set,bcs_train_set = train_sets
 pde_bounds, bcs_bounds = NeuralPDE.get_bounds(domains,bcs,indvars,depvars,error_strategy)
 
 
+
 pde_loss_function = NeuralPDE.get_loss_function([_pde_loss_function],
                                                 pde_bounds,
                                                 error_strategy;
@@ -151,7 +152,7 @@ end
 
 
 pde_system = PDESystem(eq, bcs, domains, [t,x1,x2,x3,x4], [u]) #substituted with indvars and depvars
-prob = NeuralPDE.discretize(pde_system, discretization)
+prob = discretize(pde_system, discretization)
 
 t_0 = time_ns()
 

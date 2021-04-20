@@ -12,17 +12,17 @@ function hamilton_jacobi(strategy, minimizer, maxIters)
     @parameters  t x1 x2 x3 x4
     @variables   u(..)
 
-    @derivatives Dt'~t
+    Dt = Differential(t)
 
-    @derivatives Dx1'~x1
-    @derivatives Dx2'~x2
-    @derivatives Dx3'~x3
-    @derivatives Dx4'~x4
+    Dx1 = Differential(x1)
+    Dx2 = Differential(x2)
+    Dx3 = Differential(x3)
+    Dx4 = Differential(x4)
 
-    @derivatives Dxx1''~x1
-    @derivatives Dxx2''~x2
-    @derivatives Dxx3''~x3
-    @derivatives Dxx4''~x4
+    Dxx1 = Differential(x1)^2
+    Dxx2 = Differential(x2)^2
+    Dxx3 = Differential(x3)^2
+    Dxx4 = Differential(x4)^2
 
 
     # Discretization
@@ -74,7 +74,7 @@ function hamilton_jacobi(strategy, minimizer, maxIters)
 
     chain = FastChain(FastDense(5,n,Flux.σ),FastDense(n,n,Flux.σ),FastDense(n,1))   #Neural network from Flux library
 
-    discretization = NeuralPDE.PhysicsInformedNN(chain, strategy = strategy)
+    discretization = NeuralPDE.PhysicsInformedNN(chain, strategy)
 
     indvars = [t,x1,x2,x3,x4]   #phisically independent variables
     depvars = [u]       #dependent (target) variable
@@ -82,9 +82,50 @@ function hamilton_jacobi(strategy, minimizer, maxIters)
     dim = length(domains)
 
     losses = []
-    cb = function (p,l)     #loss function handling
-        println("Current loss is: $l")
+
+    phi = NeuralPDE.get_phi(chain)
+    derivative = NeuralPDE.get_numeric_derivative()
+    initθ = DiffEqFlux.initial_params(chain)
+
+    dim = length(domains)
+
+    error_strategy = NeuralPDE.QuadratureTraining(quadrature_alg=CubatureJLh(),reltol= 1e-4,abstol= 1e-3,maxiters=10, batch=10)
+    _pde_loss_function = NeuralPDE.build_loss_function(eq,indvars,depvars,phi,derivative,chain,initθ,error_strategy)
+    _pde_loss_function(rand(dim,10), initθ)
+
+    bc_indvars = NeuralPDE.get_argument(bcs,indvars,depvars)
+    _bc_loss_functions = [NeuralPDE.build_loss_function(bc,indvars,depvars, phi, derivative,chain,initθ,error_strategy,
+                                                  bc_indvars = bc_indvar) for (bc,bc_indvar) in zip(bcs,bc_indvars)]
+    map(loss_f -> loss_f(rand(dim-1,10), initθ),_bc_loss_functions)
+
+    dx = 0.1
+    train_sets = NeuralPDE.generate_training_sets(domains,dx,[eq],bcs,indvars,depvars)
+    pde_train_set,bcs_train_set = train_sets
+    pde_bounds, bcs_bounds = NeuralPDE.get_bounds(domains,bcs,indvars,depvars,error_strategy)
+
+
+
+    pde_loss_function = NeuralPDE.get_loss_function([_pde_loss_function],
+                                                    pde_bounds,
+                                                    error_strategy;
+                                                    τ = 1/100)
+
+    pde_loss_function(initθ)
+    error_strategy = NeuralPDE.QuadratureTraining(quadrature_alg=CubatureJLh(),reltol= 1e-2,abstol= 1e-1,maxiters=5, batch=100)
+    bc_loss_function = NeuralPDE.get_loss_function(_bc_loss_functions,
+                                                   bcs_bounds,
+                                                   error_strategy;
+                                                   τ = 1/40)
+    bc_loss_function(initθ)
+
+    function loss_function_(θ,p)
+        return pde_loss_function(θ) + bc_loss_function(θ)
+    end
+
+    cb_ = function (p,l)
         append!(losses, l)
+        append!(error, pde_loss_function(p) + bc_loss_function(p))
+        println(length(losses), " Current loss is: ", l, " uniform error is, ",  pde_loss_function(p) + bc_loss_function(p))
         return false
     end
 
@@ -93,7 +134,7 @@ function hamilton_jacobi(strategy, minimizer, maxIters)
 
     t_0 = time_ns()
 
-    res = GalacticOptim.solve(prob, minimizer; cb = cb, maxiters=maxIters) #allow_f_increase = false,
+    res = GalacticOptim.solve(prob, minimizer; cb = cb_, maxiters=maxIters) #allow_f_increase = false,
 
     t_f = time_ns()
     training_time = (t_f - t_0)/10^9
@@ -106,7 +147,7 @@ function hamilton_jacobi(strategy, minimizer, maxIters)
 
     u_predict = [reshape([first(phi([t,x1,x2,x3,x4],res.minimizer)) for x1 in x1s for x2 in x2s for x3 in x3s for x4 in x4s], (length(x1s),length(x2s), length(x3s),length(x4s))) for t in ts]  #matrix of model's prediction
 
-    return [losses, u_predict, u_predict, domain, training_time] #add numeric solution
+    return [error, u_predict, u_predict, domain, training_time] #add numeric solution
 end
 
 #losses, u_predict, u_predict, domain, training_time = hamilton_jacobi(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 1000), GalacticOptim.ADAM(0.01), 500)
