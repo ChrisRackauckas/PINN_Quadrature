@@ -10,7 +10,7 @@ include("./hamilton_jacobi.jl")
 
 
 # Settings:
-maxIters   = 500  #number of iterations
+maxIters   = 3  #number of iterations
 
 
 strategies = [NeuralPDE.QuadratureTraining(quadrature_alg = CubaCuhre(), reltol = 1e-4, abstol = 1e-3, maxiters = 10, batch = 10),
@@ -21,13 +21,16 @@ strategies = [NeuralPDE.QuadratureTraining(quadrature_alg = CubaCuhre(), reltol 
               NeuralPDE.StochasticTraining(100),
               NeuralPDE.QuasiRandomTraining(100; sampling_alg = UniformSample(), minibatch = 100)]
 
-strategies_short_name = ["CubaCuhre", "HCubatureJL",
-                        "CubatureJLh", "CubatureJLp", "GridTraining",
+strategies_short_name = ["CubaCuhre",
+                        "HCubatureJL",
+                        "CubatureJLh",
+                        "CubatureJLp",
+                        "GridTraining",
                         "StochasticTraining",
-                         "QuasiRandomTraining"]
+                        "QuasiRandomTraining"]
 
 minimizers = [GalacticOptim.ADAM(0.01)]
-              #GalacticOptim.BFGS(),
+             #[GalacticOptim.BFGS()]
               #GalacticOptim.LBFGS()]
 
 minimizers_short_name = ["ADAM"]
@@ -38,69 +41,76 @@ minimizers_short_name = ["ADAM"]
 numeric_res = Dict()
 prediction_res =  Dict()
 benchmark_res = Dict()
-losses_res =  Dict()
+error_res =  Dict()
 domains = Dict()
+params_res = Dict()  #to use same params for the next run
 
+
+
+## Time Benchmark
 for strat=1:length(strategies) # strategy
       for min =1:length(minimizers) # minimizer
-            t_0 = time_ns()
-            #println(string(strategies[strat], minimizers[min]))
-            res = allen_cahn(strategies[strat], minimizers[min], maxIters)
-            push!(losses_res, string(strat,min)     => res[1])
-            push!(prediction_res, string(strat,min) => res[2])
-            push!(numeric_res, string(strat,min)    => res[3])
-            push!(domains, string(strat,min)        => res[4])
-            push!(benchmark_res, string(strat,min)  => res[5])
-            print(string("Training time ", strategies_short_name[strat], " ", minimizers_short_name[min], " = ",(res[5])))
+            res = allen_cahn_time(strategies[strat], minimizers[min], maxIters)
+            push!(benchmark_res, string(strat,min)  => res[1])
+            push!(params_res, string(strat,min)  => res[2])
+            print(string("Training time (", strategies_short_name[strat], " ", minimizers_short_name[min], ") = ",(res[1])))
       end
 end
 
 
-
-#////////////////////////////////////////
-# ANALYSIS OF RESULTS: LEVEL-SET
-#////////////////////////////////////////
-
-## Time Benchmark
 benchmark_res_name = Dict()
 for strat=1:length(strategies) # strategy
       for min =1:length(minimizers)
             push!(benchmark_res_name, string(strategies_short_name[strat], " + " , minimizers_short_name[min]) => benchmark_res[string(strat,min)])
       end
 end
-bar = Plots.bar(collect(keys(benchmark_res_name)), collect(values(benchmark_res_name)), title = string("A-C training time (500 iters + ADAM(0.01))"), titlefontsize = 12, yrotation = 30, orientation= :horizontal, legend = false, xlabel = "Seconds", xguidefontsize=9)
-Plots.savefig("Allen_Cahn_training_time(500 + ADAM).pdf")
+bar = Plots.bar(collect(keys(benchmark_res_name)), collect(values(benchmark_res_name)), title = string("HJ training time (500 iters + ADAM(0.01))"), titlefontsize = 12, yrotation = 30, orientation= :horizontal, legend = false, xlabel = "Seconds", xguidefontsize=9)
+Plots.savefig("Hamilton_Jacobi_training_time(500 + ADAM).pdf")
 
 
-## Convergence : run line 75 without "!" then run line after, then re-run line 75 with "!"
+
+## Convergence
+
+for strat=1:length(strategies) # strategy
+      for min =1:length(minimizers) # minimizer
+            println(string(strategies_short_name[strat], "  ", minimizers_short_name[min]))
+            res = allen_cahn(strategies[strat], minimizers[min], maxIters, params_res[string(strat,min)])
+            push!(error_res, string(strat,min)     => res[1])
+            push!(prediction_res, string(strat,min) => res[2])
+            push!(numeric_res, string(strat,min)    => res[3])
+            push!(domains, string(strat,min)        => res[4])
+      end
+end
+
+
+
 #Plotting the first strategy with the first minimizer out from the loop to initialize the canvas
 current_label = string(strategies_short_name[1], " + " , minimizers_short_name[1])
-losses = plot(1:(maxIters + 1), losses_res["11"], yaxis=:log10, title = string("Allen_Cahn"), ylabel = "log(error)", label = current_label)#legend = true)#, size=(1200,700))
-
+error = Plots.plot(1:(maxIters + 1), error_res["11"], yaxis=:log10, title = string("Hamilton_Jacobi"), ylabel = "log(error)", label = current_label)#legend = true)#, size=(1200,700))
 #=for strat=2:length(strategies) # strategy
       for min =1:length(minimizers) # minimizer
             # Learning curve plots with different strategies, minimizer
             current_label = string(strategies_short_name[strat], " + " , minimizers_short_name[min])
-            plot!(losses, 1:(maxIters + 1), losses_res[string(strat,min)], yaxis=:log10, title = string("Allen_Cahn"), ylabel = "log(error)", label = current_label)#, size=(2000,900))
+            plot!(error, 1:(maxIters + 1), error_res[string(strat,min)], yaxis=:log10, title = string("Allen_Cahn"), ylabel = "log(error)", label = current_label)#, size=(2000,900))
       end
 end
 =#
 
-plot!(losses, 1:(maxIters + 1), losses_res[string(2,1)], yaxis=:log10, title = string("Allen_Cahn"), ylabel = "log(error)", label = string(strategies_short_name[2], " + " , minimizers_short_name[1]))
-plot!(losses, 1:(maxIters + 1), losses_res[string(3,1)], yaxis=:log10, title = string("Allen_Cahn"), ylabel = "log(error)", label = string(strategies_short_name[3], " + " , minimizers_short_name[1]))
-plot!(losses, 1:(maxIters + 1), losses_res[string(4,1)], yaxis=:log10, title = string("Allen_Cahn"), ylabel = "log(error)", label = string(strategies_short_name[4], " + " , minimizers_short_name[1]))
-plot!(losses, 1:(maxIters + 1), losses_res[string(5,1)], yaxis=:log10, title = string("Allen_Cahn"), ylabel = "log(error)", label = string(strategies_short_name[5], " + " , minimizers_short_name[1]))
-plot!(losses, 1:(maxIters + 1), losses_res[string(6,1)], yaxis=:log10, title = string("Allen_Cahn"), ylabel = "log(error)", label = string(strategies_short_name[6], " + " , minimizers_short_name[1]))
-plot!(losses, 1:(maxIters + 1), losses_res[string(7,1)], yaxis=:log10, title = string("Allen Cahn: 500 iters + ADAM (0.01)"), ylabel = "log(error)", label = string(strategies_short_name[7], " + " , minimizers_short_name[1]))
+plot!(error, 1:(maxIters + 1), error_res[string(2,1)], yaxis=:log10, title = string("Allen_Cahn"), ylabel = "log(error)", label = string(strategies_short_name[2], " + " , minimizers_short_name[1]))
+plot!(error, 1:(maxIters + 1), error_res[string(3,1)], yaxis=:log10, title = string("Allen_Cahn"), ylabel = "log(error)", label = string(strategies_short_name[3], " + " , minimizers_short_name[1]))
+plot!(error, 1:(maxIters + 1), error_res[string(4,1)], yaxis=:log10, title = string("Allen_Cahn"), ylabel = "log(error)", label = string(strategies_short_name[4], " + " , minimizers_short_name[1]))
+plot!(error, 1:(maxIters + 1), error_res[string(5,1)], yaxis=:log10, title = string("Allen_Cahn"), ylabel = "log(error)", label = string(strategies_short_name[5], " + " , minimizers_short_name[1]))
+plot!(error, 1:(maxIters + 1), error_res[string(6,1)], yaxis=:log10, title = string("Allen_Cahn"), ylabel = "log(error)", label = string(strategies_short_name[6], " + " , minimizers_short_name[1]))
+plot!(error, 1:(maxIters + 1), error_res[string(7,1)], yaxis=:log10, title = string("Level Set: 500 iters + ADAM (0.01)"), ylabel = "log(error)", label = string(strategies_short_name[7], " + " , minimizers_short_name[1]))
 
-#Plots.plot!(1:(maxIters + 1), losses_res["11"], yaxis=:log10, title = string("Allen_Cahn"), ylabel = "log(loss)")# size=(600,350))
+#Plots.plot!(1:(maxIters + 1), error_res["11"], yaxis=:log10, title = string("Allen_Cahn"), ylabel = "log(loss)")# size=(600,350))
 
-Plots.savefig("Allen_Cahn_plot(500_iter).pdf")
+Plots.savefig("Level_Set_plot(500_iter).pdf")
 
-Plots.plot(losses,bar)
+Plots.plot(error,bar)
 
 
-
+#=
 ## Comparison Predicted solution vs Numerical solution
 integrals = Dict()
 
@@ -139,3 +149,5 @@ end
 
 Plots.bar(collect(keys(integrals)), collect(values(integrals)), title = string("Nernst-Planck Error Integrals"), xrotation = 90)
 savefig("Nernst-Planck_strategies_MAEs.pdf")
+
+=#
