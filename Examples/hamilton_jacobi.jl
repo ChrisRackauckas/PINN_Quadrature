@@ -5,7 +5,7 @@ using Plots
 using PyPlot
 using QuasiMonteCarlo
 
-
+print("Precompiling Done")
 
 function hamilton_jacobi_time(strategy, minimizer, maxIters)
 
@@ -241,6 +241,17 @@ function hamilton_jacobi(strategy, minimizer, maxIters, params)
     res = GalacticOptim.solve(prob, minimizer, cb = cb_, maxiters=maxIters)
 
     phi = discretization.phi
+
+    final_params = res.minimizer
+
+    ##SAVE PARAMETERS
+    outfile = "final_params_hamilton_jacobi.txt"
+    open(outfile, "w") do f
+      for i in final_params
+        println(f, i)
+      end
+    end
+
 
     # Model prediction
     domain = [ts,x1s,x2s,x3s,x4s]

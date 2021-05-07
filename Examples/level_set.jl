@@ -229,6 +229,17 @@ function level_set(strategy, minimizer, maxIters, params)
 
     phi = discretization.phi
 
+    final_params = res.minimizer
+
+    ##SAVE PARAMETERS
+    outfile = "final_params_level_set.txt"
+    open(outfile, "w") do f
+      for i in final_params
+        println(f, i)
+      end
+    end
+
+
     # Model prediction
     domain = [ts, xs, ys]
 
