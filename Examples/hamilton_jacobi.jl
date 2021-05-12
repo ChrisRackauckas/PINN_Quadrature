@@ -194,34 +194,28 @@ function hamilton_jacobi(strategy, minimizer, maxIters, params)
 
     dim = length(domains)
 
-    error_strategy = NeuralPDE.QuadratureTraining(quadrature_alg=CubatureJLh(),reltol= 1e-4,abstol= 1e-3,maxiters=10, batch=10)
-    _pde_loss_function = NeuralPDE.build_loss_function(eq,indvars,depvars,phi,derivative,chain,initθ,error_strategy)
-    _pde_loss_function(rand(dim,10), initθ)
-
-    bc_indvars = NeuralPDE.get_argument(bcs,indvars,depvars)
-    _bc_loss_functions = [NeuralPDE.build_loss_function(bc,indvars,depvars, phi, derivative,chain,initθ,error_strategy,
-                                                  bc_indvars = bc_indvar) for (bc,bc_indvar) in zip(bcs,bc_indvars)]
-    map(loss_f -> loss_f(rand(dim-1,10), initθ),_bc_loss_functions)
-
     dx = 0.1
-    train_sets = NeuralPDE.generate_training_sets(domains,dx,[eq],bcs,indvars,depvars)
-    pde_train_set,bcs_train_set = train_sets
-    pde_bounds, bcs_bounds = NeuralPDE.get_bounds(domains,bcs,indvars,depvars,error_strategy)
+    
+    error_strategy = GridTraining(dx) #NeuralPDE.QuadratureTraining(quadrature_alg=CubatureJLh(),reltol= 1e-4,abstol= 1e-3,maxiters=10, batch=10)
+    _pde_loss_function = NeuralPDE.build_loss_function(eq,indvars,depvars,
+                                         phi,derivative,chain,initθ,error_strategy)
 
+    bc_indvars = NeuralPDE.get_variables(bcs,indvars,depvars)
+    _bc_loss_functions = [NeuralPDE.build_loss_function(bc,indvars,depvars,
+                                              phi,derivative,chain,initθ,error_strategy,
+                                              bc_indvars = bc_indvar) for (bc,bc_indvar) in zip(bcs,bc_indvars)]
+
+    train_sets = NeuralPDE.generate_training_sets(domains,dx,[eq],bcs,indvars,depvars)
+    train_domain_set, train_bound_set = train_sets
 
 
     pde_loss_function = NeuralPDE.get_loss_function([_pde_loss_function],
-                                                    pde_bounds,
-                                                    error_strategy;
-                                                    τ = 1/100)
+                                          train_domain_set,
+                                          error_strategy)
 
-    pde_loss_function(initθ)
-    error_strategy = NeuralPDE.QuadratureTraining(quadrature_alg=CubatureJLh(),reltol= 1e-2,abstol= 1e-1,maxiters=5, batch=100)
     bc_loss_function = NeuralPDE.get_loss_function(_bc_loss_functions,
-                                                   bcs_bounds,
-                                                   error_strategy;
-                                                   τ = 1/40)
-    bc_loss_function(initθ)
+                                         train_bound_set,
+                                         error_strategy)
 
     function loss_function_(θ,p)
         return pde_loss_function(θ) + bc_loss_function(θ)

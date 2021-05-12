@@ -10,7 +10,7 @@ include("./hamilton_jacobi.jl")
 
 
 # Settings:
-maxIters   = 2  #number of iterations
+maxIters   = 5  #number of iterations
 
 
 strategies = [NeuralPDE.QuadratureTraining(quadrature_alg = CubaCuhre(), reltol = 1e-4, abstol = 1e-3, maxiters = 10, batch = 10),
@@ -72,7 +72,6 @@ bar = Plots.bar(collect(keys(benchmark_res_name)), collect(values(benchmark_res_
 
 #Plots.savefig("HJ_training_time.pdf")
 
-values(benchmark_res_name)
 
 
 print("\n Starting second run for convergence")
