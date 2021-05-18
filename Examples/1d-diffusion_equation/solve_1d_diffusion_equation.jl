@@ -11,8 +11,8 @@ end
 function solve_1d_diffusion_equation(strategy)
     @parameters x t
     @variables u(..)
-    @derivatives Dt'~t
-    @derivatives Dxx''~x
+    Dt = Differential(t)
+    Dxx = Differential(x)^2
 
     eq = Dt(u(x,t)) - Dxx(u(x,t)) ~ -exp(-t) * (sin(pi * x) - pi^2 * sin(pi * x))
 
@@ -25,12 +25,12 @@ function solve_1d_diffusion_equation(strategy)
 
     chain = FastChain(FastDense(2,18,Flux.σ),FastDense(18,18,Flux.σ),FastDense(18,1))
 
-    discretization = PhysicsInformedNN(chain,strategy =strategy)
+    discretization = PhysicsInformedNN(chain,strategy)
 
     pde_system = PDESystem(eq,bcs,domains,[x,t],[u])
     prob = discretize(pde_system,discretization)
 
-    res = GalacticOptim.solve(prob, ADAM(0.01); cb = cb, maxiters=5000)
+    res = GalacticOptim.solve(prob, ADAM(0.01); cb = cb, maxiters=10000)
     phi = discretization.phi
     res,phi
 end
@@ -39,12 +39,12 @@ reses = []
 losses = []
 phis = []
 
-grid_strategy = GridTraining(dx=[0.2,0.1])
-stochastic_strategy = StochasticTraining(number_of_points=100)
-quasirandom_strategy = QuasiRandomTraining(sampling_method = UniformSample(),
-                                                     number_of_points = 100,
-                                                     number_of_minibatch = 100)
-quadrature_strategy = QuadratureTraining(algorithm = CubatureJLp(),reltol=1e-5,abstol=1e-5,maxiters=50)
+grid_strategy = GridTraining([0.2,0.1])
+stochastic_strategy = StochasticTraining(100)
+quasirandom_strategy = QuasiRandomTraining(100,
+                                           sampling_alg = UniformSample(),
+                                           minibatch = 100)
+quadrature_strategy = QuadratureTraining(quadrature_alg = CubatureJLh(),reltol=1e-5,abstol=1e-5,maxiters=50, batch=100)
 
 strategies = [grid_strategy,stochastic_strategy,quasirandom_strategy,quadrature_strategy]
 
