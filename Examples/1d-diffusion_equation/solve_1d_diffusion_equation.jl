@@ -74,11 +74,11 @@ for (phi,res) in zip(phis, reses)
 end
 
 using Plots
-names  = ["grid","stochastic", "quasirandom", "quadrature" ]
+names  = ["GridTraining", "QuadratureTraining", "StochasticTraining", "QuasiRandomTraining"]
 for (u_predict, diff_u,strategy,name) in zip(u_predicts,diff_us,strategies,names)
-    p1 = plot(xs, ts, u_real, linetype=:contourf,title = "analytic");
-    p2 = plot(xs, ts, u_predict, linetype=:contourf,title = "predict $name");
-    p3 = plot(xs, ts, diff_u,linetype=:contourf,title = "error");
+    p1 = plot(xs, ts, u_real, linetype=:contourf,title= "$name" , xlabel = "analytic");
+    p2 = plot(xs, ts, u_predict, linetype=:contourf,xlabel = "predict");
+    p3 = plot(xs, ts, diff_u,linetype=:contourf,xlabel = "error");
     plot(p1,p2,p3)
     savefig("$name")
 end
