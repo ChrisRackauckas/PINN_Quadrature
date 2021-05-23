@@ -1,1 +1,0 @@
-Any["TIME", "CubaCuhreADAM!162.370982898!", "HCubatureJLADAM!117.267922811!", "CubatureJLhADAM!45.125692364!", "CubatureJLpADAM!35.515324488!", "GridTrainingADAM!52.313216623!", "StochasticTrainingADAM!9.530940872!", "QuasiRandomTrainingADAM!9.614679352!"]

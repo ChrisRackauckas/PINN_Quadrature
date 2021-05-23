@@ -9,12 +9,11 @@ using JLD
 
 print("Precompiling Done")
 
-function level_set(strategy, minimizer, time)
+function level_set(strategy, minimizer, maxIters)
 
     ##  DECLARATIONS
     @parameters  t x y
     @variables   u(..)
-    maxIters = 10000
 
     Dt = Differential(t)
     Dx = Differential(x)
@@ -32,6 +31,7 @@ function level_set(strategy, minimizer, time)
     dx  = xwidth/xMeshNum
     dy  = ywidth/yMeshNum
     dt  = tmax/tMeshNum
+
 
     domains = [t ∈ IntervalDomain(0.0,tmax),
                x ∈ IntervalDomain(0.0,xwidth),
@@ -121,9 +121,6 @@ function level_set(strategy, minimizer, time)
         println(length(losses), " Current loss is: ", l, " uniform error is, ",  pde_loss_function(p) + bc_loss_function(p))
 
         timeCounter = timeCounter + time_ns() - deltaT_s #timeCounter sums all delays due to the callback functions of the previous iterations
-        if (ctime > time) #if I exceed the limit time I stop the training
-            return true #Stop the minimizer and continue from line 142
-        end
 
         return false
     end
