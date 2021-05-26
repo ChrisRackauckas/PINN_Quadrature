@@ -1,7 +1,7 @@
 using NeuralPDE
 using Quadrature, Cubature, Cuba
 using Flux, ModelingToolkit, GalacticOptim, Optim, DiffEqFlux
-using Plots
+#using Plots
 using DelimitedFiles
 using QuasiMonteCarlo
 using JLD

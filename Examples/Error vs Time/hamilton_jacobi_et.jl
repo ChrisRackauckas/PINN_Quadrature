@@ -1,8 +1,8 @@
 using NeuralPDE
 using Quadrature, Cubature, Cuba
 using Flux, ModelingToolkit, GalacticOptim, Optim, DiffEqFlux
-using Plots
-using PyPlot
+#using Plots
+#using PyPlot
 using DelimitedFiles
 using QuasiMonteCarlo
 using JLD
