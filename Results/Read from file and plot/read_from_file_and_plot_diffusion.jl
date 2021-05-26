@@ -36,9 +36,9 @@ benchmark_res = Dict()
 error_res =  Dict()
 domains = Dict()
 
-error_d_res = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/run3_/diffusion_50k_Errors.jld")["error_res"]
-times_d = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/run3_/diffusion_50k_Timeline.jld")["times"]
-pars_d_res = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/run3_/diffusion_50k_Params.jld")["params_res"]
+error_d_res = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run3/diffusion_50k_Errors.jld")["error_res"]
+times_d = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run3/diffusion_50k_Timeline.jld")["times"]
+pars_d_res = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run3/diffusion_50k_Params.jld")["params_res"]
 
 error_d_res
 times_d
@@ -196,6 +196,7 @@ for strat in 1:6
       end
 end
 
+diff_u
 
 #names  = ["GridTraining","StochasticTraining", "QuasiRandomTraining", "" ]
 #for (u_predict, diff_u,strategy,name) in zip(u_predicts,diff_us,strategies,names)

@@ -144,5 +144,5 @@ function allen_cahn(strategy, minimizer, maxIters)
 
     u_predict = [reshape([first(phi([t,x1,x2,x3,x4],res.minimizer)) for x1 in x1s for x2 in x2s for x3 in x3s for x4 in x4s], (length(x1s),length(x2s), length(x3s),length(x4s))) for t in ts]  #matrix of model's prediction
 
-    return [error, params, domain, times]
+    return [error, params, domain, times, losses]
 end

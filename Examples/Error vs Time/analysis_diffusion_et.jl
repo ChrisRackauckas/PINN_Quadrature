@@ -7,12 +7,14 @@ include("./diffusion_et.jl")
 
 
 # Settings:
-maxIters = [(5000,5000,5000,5000,5000,5000),(2000,2000,2000,2000,2000,2000)] #iters for ADAM/LBFGS
+maxIters = [(50000,50000,50000,50000,50000,50000),(30000,30000,30000,30000,30000,30000)] #iters for ADAM/LBFGS
 
-strategies = [#NeuralPDE.QuadratureTraining(quadrature_alg = CubaCuhre(), reltol = 1e-4, abstol = 1e-3, maxiters = 10, batch = 10),
-              NeuralPDE.QuadratureTraining(quadrature_alg = HCubatureJL(), reltol=1e-5, abstol=1e-5, maxiters=50, batch = 0),
-              NeuralPDE.QuadratureTraining(quadrature_alg = CubatureJLh(), reltol=1e-5, abstol=1e-5, maxiters=50),
-              NeuralPDE.QuadratureTraining(quadrature_alg = CubatureJLp(), reltol=1e-5, abstol=1e-5, maxiters=50),
+strategies = [#NeuralPDE.QuadratureTraining(quadrature_alg = CubaCuhre(), reltol = 1, abstol = 1e-3, maxiters = 10, batch = 10),
+              NeuralPDE.QuadratureTraining(quadrature_alg = HCubatureJL(), reltol=1, abstol=1e-5, maxiters=100, batch = 0),
+              NeuralPDE.QuadratureTraining(quadrature_alg = CubatureJLh(), reltol=1, abstol=1e-5, maxiters=100),
+              NeuralPDE.QuadratureTraining(quadrature_alg = CubatureJLp(), reltol=1, abstol=1e-5, maxiters=100),
+              #NeuralPDE.QuadratureTraining(quadrature_alg = CubaVegas(), reltol=10, abstol=10, maxiters=5000),
+              #NeuralPDE.QuadratureTraining(quadrature_alg = CubaSUAVE(), reltol=1, abstol=1e-4, maxiters=1000)]
               NeuralPDE.GridTraining([0.2,0.1]),
               NeuralPDE.StochasticTraining(100),
               NeuralPDE.QuasiRandomTraining(100; sampling_alg = UniformSample(), minibatch = 100)]
@@ -21,6 +23,8 @@ strategies_short_name = [#"CubaCuhre",
                         "HCubatureJL",
                         "CubatureJLh",
                         "CubatureJLp",
+                        #"CubaVegas",
+                        #"CubaSUAVE"]
                         "GridTraining",
                         "StochasticTraining",
                         "QuasiRandomTraining"]
@@ -41,12 +45,13 @@ domains = Dict()
 params_res = Dict()  #to use same params for the next run
 times = Dict()
 prediction = Dict()
+losses_res = Dict()
 
 print("Starting run")
 ## Convergence
 
-for strat=1:length(strategies) # strategy
-      for min =1:length(minimizers) # minimizer
+for min =1:length(minimizers) # minimizer
+      for strat=1:length(strategies) # strategy
             println(string(strategies_short_name[strat], "  ", minimizers_short_name[min]))
             res = diffusion(strategies[strat], minimizers[min], maxIters[min][strat])
             push!(error_res, string(strat,min)     => res[1])
@@ -54,6 +59,8 @@ for strat=1:length(strategies) # strategy
             push!(domains, string(strat,min)        => res[3])
             push!(times, string(strat,min)        => res[4])
             push!(prediction, string(strat,min)        => res[5])
+            push!(losses_res, string(strat,min)        => res[6])
+
       end
 end
 
@@ -62,6 +69,8 @@ save("./diffusion_Timeline.jld", "times", times)
 save("./diffusion_Errors.jld", "error_res", error_res)
 save("./diffusion_Params.jld", "params_res", params_res)
 save("./diffusion_predict.jld", "prediction", prediction)
+save("./diffusion_losses.jld", "losses_res", losses_res)
+
 
 
 print("\n Plotting error vs iters")

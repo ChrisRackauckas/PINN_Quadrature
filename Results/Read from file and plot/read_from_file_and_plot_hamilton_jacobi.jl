@@ -91,11 +91,14 @@ bar2 = Plots.bar(collect(keys(benchmark_res_name2)), collect(values(benchmark_re
 
 print("\n Plotting error vs iters")
 #Plot error vs iters ADAM
+
 for strat in 1:7
-      for min in 1:1
-            error_hj_res[string(strat, "1")] = error_hj_res[string(strat, "1")][1:1000]
-      end
+      error_hj_res[string(strat, "1")] = error_hj_res[string(strat, "1")][1:1000]
+      min_error[string(strat, "1")] = minimum(error_hj_res[string(strat, "1")])
 end
+
+min_error
+
 #Plotting the first strategy with the first minimizer out from the loop to initialize the canvas
 current_label = string(strategies_short_name[1])
 error = Plots.plot(1:length(error_hj_res["11"]), error_hj_res["11"], yaxis=:log10, title = string("Hamilton Jacobi convergence - ADAM(0.005) / 1k iter."), ylabel = "Error", label = current_label)#legend = true)#, size=(1200,700))

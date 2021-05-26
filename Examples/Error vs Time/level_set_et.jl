@@ -143,7 +143,7 @@ function level_set(strategy, minimizer, maxIters)
 
     u_predict = [reshape([first(phi([t,x,y],res.minimizer)) for x in xs for y in ys], (length(xs),length(ys))) for t in ts]  #matrix of model's prediction
 
-    return [error, params, domain, times] #add numeric solution
+    return [error, params, domain, times, losses] #add numeric solution
 end
 
 #level_set(NeuralPDE.QuadratureTraining(algorithm = CubaCuhre(), reltol = 1e-8, abstol = 1e-8, maxiters = 100), GalacticOptim.ADAM(0.01), 500)

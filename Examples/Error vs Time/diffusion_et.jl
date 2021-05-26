@@ -2,7 +2,6 @@ using NeuralPDE
 using Quadrature, Cubature, Cuba
 using Flux, ModelingToolkit, GalacticOptim, Optim, DiffEqFlux
 using Plots
-using PyPlot
 using DelimitedFiles
 using QuasiMonteCarlo
 using JLD
@@ -36,7 +35,7 @@ function diffusion(strategy, minimizer, maxIters)
     error = []
     times = []
 
-    dx_err = 0.1
+    dx_err = 0.9
 
     error_strategy = GridTraining(dx_err)
 
@@ -82,7 +81,6 @@ function diffusion(strategy, minimizer, maxIters)
         return false
     end
 
-
     discretization = PhysicsInformedNN(chain,strategy)
 
     pde_system = PDESystem(eq,bcs,domains,indvars,depvars)
@@ -102,5 +100,5 @@ function diffusion(strategy, minimizer, maxIters)
 
     u_predict = reshape([first(phi([x,t],res.minimizer)) for x in xs for t in ts],(length(xs),length(ts)))
 
-    return [error, params, domain, times, u_predict]
+    return [error, params, domain, times, u_predict, losses]
 end

@@ -22,9 +22,9 @@ benchmark_res = Dict()
 error_res =  Dict()
 domains = Dict()
 
-error_ac_res = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/run3_/Allen_Cahn_Errors.jld")["error_res"]
-times_ac = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/run3_/Allen_Cahn_Timeline.jld")["times"]
-pars_ac_res = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/run3_/Allen_Cahn_Params.jld")["params_res"]
+error_ac_res = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run3/Allen_Cahn_Errors.jld")["error_res"]
+times_ac = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run3/Allen_Cahn_Timeline.jld")["times"]
+pars_ac_res = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run3/Allen_Cahn_Params.jld")["params_res"]
 
 error_ac_res
 times_ac
@@ -35,7 +35,7 @@ error_ac_res_short = Dict()
 
 for strat in 1:7
       times_ac[string(strat, "1")] = times_ac[string(strat, "1")].-times_ac[string(strat, "1")][1]
-      times_ac_short[string(strat, "1")] = times_ac[string(strat, "1")][times_ac[string(strat, "1")] .< 2000]
+      times_ac_short[string(strat, "1")] = times_ac[string(strat, "1")][times_ac[string(strat, "1")] .< 150]
       error_ac_res_short[string(strat, "1")] = error_ac_res[string(strat, "1")][1:length(times_ac_short[string(strat, "1")])]
 
       times_ac[string(strat, "2")] = times_ac[string(strat, "2")].-times_ac[string(strat, "2")][1]
@@ -48,10 +48,11 @@ end
 total_time = Dict()
 final_error = Dict()
 error_fixed_time = Dict()
+min_error = Dict()
 
 for strat in 1:7
+      total_time[string(strat, "1")] = times_ac[string(strat, "1")][1000]
       for min in 1:2
-            total_time[string(strat, "1")] = times_ac[string(strat, "1")][1000]
             final_error[string(strat, min)] = error_ac_res[string(strat, min)][end]
             error_fixed_time[string(strat, min)] = error_ac_res_short[string(strat, min)][end]
       end
@@ -60,6 +61,7 @@ end
 total_time
 final_error
 error_fixed_time
+
 
 benchmark_res_name = Dict()
 for strat=1:length(strategies_short_name) # strategy
@@ -91,10 +93,11 @@ bar2 = Plots.bar(collect(keys(benchmark_res_name2)), collect(values(benchmark_re
 print("\n Plotting error vs iters")
 
 for strat in 1:7
-      for min in 1:1
-            error_ac_res[string(strat, "1")] = error_ac_res[string(strat, "1")][1:1000]
-      end
+      error_ac_res[string(strat, "1")] = error_ac_res[string(strat, "1")][1:1000]
+      min_error[string(strat, "1")] = minimum(error_ac_res[string(strat, "1")])
 end
+
+min_error
 #Plot error vs iters ADAM
 #Plotting the first strategy with the first minimizer out from the loop to initialize the canvas
 current_label = string(strategies_short_name[1])
@@ -132,7 +135,7 @@ Plots.savefig("./Results/Error vs Iters/Allen Cahn/Allen_Cahn_comparison_LBFGS.p
 print("\n Plotting error_ac vs time")
 #Plotting the first strategy with the first minimizer out from the loop to initialize the canvas
 current_label = string(strategies_short_name[1])#, " + " , minimizers_short_name[1])
-error_ac_adam = Plots.plot(times_ac_short["11"], error_ac_res_short["11"], yaxis=:log10, title = string("Allen Cahn convergence - ADAM (0.005)"), ylabel = "Error", label = current_label, xlabel = "Time (seconds)", size = (1500,500))#legend = true)#, size=(1200,700))
+error_ac_adam = Plots.plot(times_ac_short["11"], error_ac_res_short["11"], yaxis=:log10, title = string("Allen Cahn convergence - ADAM (0.005) / First 100 seconds of training"), ylabel = "Error", label = current_label, xlabel = "Time (seconds)", size = (1500,500))#legend = true)#, size=(1200,700))
 plot!(error_ac_adam, times_ac_short["21"], error_ac_res_short["21"], yaxis=:log10, label = string(strategies_short_name[2]))
 plot!(error_ac_adam, times_ac_short["31"], error_ac_res_short["31"], yaxis=:log10, label = string(strategies_short_name[3]))#, " + " , minimizers_short_name[1]))
 plot!(error_ac_adam, times_ac_short["41"], error_ac_res_short["41"], yaxis=:log10, label = string(strategies_short_name[4]))#, " + " , minimizers_short_name[1]))
@@ -140,7 +143,7 @@ plot!(error_ac_adam, times_ac_short["51"], error_ac_res_short["51"], yaxis=:log1
 plot!(error_ac_adam, times_ac_short["61"], error_ac_res_short["61"], yaxis=:log10, label = string(strategies_short_name[6]))#, " + " , minimizers_short_name[1]))
 plot!(error_ac_adam, times_ac_short["71"], error_ac_res_short["71"], yaxis=:log10, label = string(strategies_short_name[7]))#, " + " , minimizers_short_name[1]))
 
-Plots.savefig("Allen_Cahn_et_ADAM_large.pdf")
+Plots.savefig("./Results/Plots/Error vs Time/Allen Cahn/Allen_Cahn_et_ADAM_large_100s.pdf")
 
 
 #Plotting error vs time with L-BFGS
@@ -153,4 +156,4 @@ plot!(error_ac_lbfgs, times_ac_short["62"], error_ac_res_short["62"], yaxis=:log
 plot!(error_ac_lbfgs, times_ac_short["72"], error_ac_res_short["72"], yaxis=:log10, label = string(strategies_short_name[7]))#, " + " , minimizers_short_name[2]))
 
 
-Plots.savefig("Allen_Cahn_et_LBFGS_50s.pdf")
+Plots.savefig("./Results/Plots/Error vs Time/Allen Cahn/Allen_Cahn_et_LBFGS_50s.pdf")

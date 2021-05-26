@@ -9,13 +9,13 @@ include("./hamilton_jacobi_et.jl")
 
 
 # Settings:
-maxIters = [(1500,1500,1500,1500,500,5000,5000),(1500,1500,1500,1000,500,5000,5000)] #iters for ADAM/LBFGS
+maxIters = [(2000,2000,2000,2000,2000,20000,20000)] #iters for ADAM/LBFGS
 
 
-strategies = [NeuralPDE.QuadratureTraining(quadrature_alg = CubaCuhre(), reltol = 1e-4, abstol = 1e-4, maxiters = 50),
-              NeuralPDE.QuadratureTraining(quadrature_alg = HCubatureJL(), reltol = 1e-4, abstol = 1e-4, maxiters = 50, batch = 0),
-              NeuralPDE.QuadratureTraining(quadrature_alg = CubatureJLh(), reltol = 1e-4, abstol = 1e-4, maxiters = 50),
-              NeuralPDE.QuadratureTraining(quadrature_alg = CubatureJLp(), reltol = 1e-4, abstol = 1e-4, maxiters = 50),
+strategies = [NeuralPDE.QuadratureTraining(quadrature_alg = CubaCuhre(), reltol = 1, abstol = 1e-4, maxiters = 100),
+              NeuralPDE.QuadratureTraining(quadrature_alg = HCubatureJL(), reltol = 1, abstol = 1e-4, maxiters = 100, batch = 0),
+              NeuralPDE.QuadratureTraining(quadrature_alg = CubatureJLh(), reltol = 1, abstol = 1e-4, maxiters = 100),
+              NeuralPDE.QuadratureTraining(quadrature_alg = CubatureJLp(), reltol = 1, abstol = 1e-4, maxiters = 100),
               NeuralPDE.GridTraining(0.09),
               NeuralPDE.StochasticTraining(100),
               NeuralPDE.QuasiRandomTraining(100; sampling_alg = UniformSample(), minibatch = 100)]
@@ -28,13 +28,13 @@ strategies_short_name = ["CubaCuhre",
                         "StochasticTraining",
                         "QuasiRandomTraining"]
 
-minimizers = [GalacticOptim.ADAM(0.005),
+minimizers = [GalacticOptim.ADAM(0.005)]
               #GalacticOptim.BFGS()]
-              GalacticOptim.LBFGS()]
+              #GalacticOptim.LBFGS()]
 
 
-minimizers_short_name = ["ADAM",
-                         "LBFGS"]
+minimizers_short_name = ["ADAM"]
+                        # "LBFGS"]
                         #"BFGS"]
 
 
@@ -43,20 +43,21 @@ error_res =  Dict()
 domains = Dict()
 params_res = Dict()  #to use same params for the next run
 times = Dict()
-
+losses_res = Dict()
 
 
 print("Starting run")
 ## Convergence
 
-for strat=1:length(strategies) # strategy
-      for min =1:length(minimizers) # minimizer
+for min =1:length(minimizers) # minimizer
+      for strat=1:length(strategies) # strategy
             println(string(strategies_short_name[strat], "  ", minimizers_short_name[min]))
             res = hamilton_jacobi(strategies[strat], minimizers[min], maxIters[min][strat])
             push!(error_res, string(strat,min)     => res[1])
             push!(params_res, string(strat,min) => res[2])
             push!(domains, string(strat,min)        => res[3])
             push!(times, string(strat,min)        => res[4])
+            push!(losses_res, string(strat,min)   => res[5])
       end
 end
 
@@ -64,10 +65,7 @@ end
 save("./Hamilton_Jacobi_Timeline.jld", "times", times)
 save("./Hamilton_Jacobi_Errors.jld", "error_res", error_res)
 save("./Hamilton_Jacobi_Params.jld", "params_res", params_res)
-
-#error = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature/LevelSet_Errors.jld")["error"]
-#time = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature/LevelSet_Timeline.jld")["times"]
-#pars = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature/LevelSet_Params.jld")["params"]
+save("./Hamilton_Jacobi_losses.jld", "losses_res", losses_res)
 
 
 
