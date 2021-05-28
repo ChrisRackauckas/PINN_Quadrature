@@ -22,9 +22,9 @@ benchmark_res = Dict()
 error_res =  Dict()
 domains = Dict()
 
-error_hj_res = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run3/Hamilton_Jacobi_Errors.jld")["error_res"]
-times_hj = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run3/Hamilton_Jacobi_Timeline.jld")["times"]
-pars_hj_res = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run3/Hamilton_Jacobi_Params.jld")["params_res"]
+error_hj_res = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run4/hamilton_errors_run1.jld")["error_res"]
+times_hj = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run4/diffusion_times_run1.jld")["times"]
+pars_hj_res = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run4/diffusion_params_run1.jld")["params_res"]
 
 error_hj_res
 times_hj

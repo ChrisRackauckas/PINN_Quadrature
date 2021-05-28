@@ -7,14 +7,12 @@ include("./diffusion_et.jl")
 
 
 # Settings:
-maxIters = [(50000,50000,50000,50000,50000,50000),(30000,30000,30000,30000,30000,30000)] #iters for ADAM/LBFGS
+maxIters = [(0,0,0,0,0,0),(5000,5000,5000,5000,5000,5000)] #iters for ADAM/LBFGS
 
 strategies = [#NeuralPDE.QuadratureTraining(quadrature_alg = CubaCuhre(), reltol = 1, abstol = 1e-3, maxiters = 10, batch = 10),
               NeuralPDE.QuadratureTraining(quadrature_alg = HCubatureJL(), reltol=1, abstol=1e-5, maxiters=100, batch = 0),
               NeuralPDE.QuadratureTraining(quadrature_alg = CubatureJLh(), reltol=1, abstol=1e-5, maxiters=100),
               NeuralPDE.QuadratureTraining(quadrature_alg = CubatureJLp(), reltol=1, abstol=1e-5, maxiters=100),
-              #NeuralPDE.QuadratureTraining(quadrature_alg = CubaVegas(), reltol=10, abstol=10, maxiters=5000),
-              #NeuralPDE.QuadratureTraining(quadrature_alg = CubaSUAVE(), reltol=1, abstol=1e-4, maxiters=1000)]
               NeuralPDE.GridTraining([0.2,0.1]),
               NeuralPDE.StochasticTraining(100),
               NeuralPDE.QuasiRandomTraining(100; sampling_alg = UniformSample(), minibatch = 100)]

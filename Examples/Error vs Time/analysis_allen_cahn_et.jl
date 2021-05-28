@@ -8,7 +8,7 @@ include("./allen_cahn_et.jl")
 using JLD
 
 # Settings:
-maxIters = [(2000,2000,2000,2000,2000,20000,20000)] #iters for ADAM/LBFGS
+maxIters = [(0,0,0,0,0,0,20000),(300,300,300,300,300,300,300)] #iters for ADAM/LBFGS
 
 strategies = [NeuralPDE.QuadratureTraining(quadrature_alg = CubaCuhre(), reltol = 1, abstol = 1e-4, maxiters = 100),
               NeuralPDE.QuadratureTraining(quadrature_alg = HCubatureJL(), reltol = 1, abstol = 1e-4, maxiters = 100, batch = 0),

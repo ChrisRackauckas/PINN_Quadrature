@@ -22,9 +22,9 @@ benchmark_res = Dict()
 error_res =  Dict()
 domains = Dict()
 
-error_ac_res = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run3/Allen_Cahn_Errors.jld")["error_res"]
-times_ac = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run3/Allen_Cahn_Timeline.jld")["times"]
-pars_ac_res = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run3/Allen_Cahn_Params.jld")["params_res"]
+error_ac_res = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run4/allen_cahn_err_run1.jld")["error_res"]
+times_ac = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run4/allen_cahn_times_run1.jld")["times"]
+pars_ac_res = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run4/allen_cahn_params_run1.jld")["params_res"]
 
 error_ac_res
 times_ac

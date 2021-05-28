@@ -10,9 +10,9 @@ using QuasiMonteCarlo
 using Statistics
 
 strategies = [#NeuralPDE.QuadratureTraining(quadrature_alg = CubaCuhre(), reltol = 1e-4, abstol = 1e-3, maxiters = 10, batch = 10),
-              NeuralPDE.QuadratureTraining(quadrature_alg = HCubatureJL(), reltol=1e-5, abstol=1e-5, maxiters=50, batch = 0),
-              NeuralPDE.QuadratureTraining(quadrature_alg = CubatureJLh(), reltol=1e-5, abstol=1e-5, maxiters=50),
-              NeuralPDE.QuadratureTraining(quadrature_alg = CubatureJLp(), reltol=1e-5, abstol=1e-5, maxiters=50),
+              NeuralPDE.QuadratureTraining(quadrature_alg = HCubatureJL(), reltol=1, abstol=1e-5, maxiters=100, batch = 0),
+              NeuralPDE.QuadratureTraining(quadrature_alg = CubatureJLh(), reltol=1, abstol=1e-5, maxiters=100),
+              NeuralPDE.QuadratureTraining(quadrature_alg = CubatureJLp(), reltol=1, abstol=1e-5, maxiters=100),
               NeuralPDE.GridTraining([0.2,0.1]),
               NeuralPDE.StochasticTraining(100),
               NeuralPDE.QuasiRandomTraining(100; sampling_alg = UniformSample(), minibatch = 100)]
@@ -36,9 +36,9 @@ benchmark_res = Dict()
 error_res =  Dict()
 domains = Dict()
 
-error_d_res = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run3/diffusion_50k_Errors.jld")["error_res"]
-times_d = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run3/diffusion_50k_Timeline.jld")["times"]
-pars_d_res = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run3/diffusion_50k_Params.jld")["params_res"]
+error_d_res = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run4/diffusion_errors_run1.jld")["error_res"]
+times_d = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run4/diffusion_times_run1.jld")["times"]
+pars_d_res = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run4/diffusion_params_run1.jld")["params_res"]
 
 error_d_res
 times_d
@@ -49,12 +49,12 @@ error_d_res_short = Dict()
 
 for strat in 1:6
       times_d[string(strat, "1")] = times_d[string(strat, "1")].-times_d[string(strat, "1")][1]
-      times_d_short[string(strat, "1")] = times_d[string(strat, "1")][times_d[string(strat, "1")] .< 250]
+      times_d_short[string(strat, "1")] = times_d[string(strat, "1")][times_d[string(strat, "1")] .< 300]
       error_d_res_short[string(strat, "1")] = error_d_res[string(strat, "1")][1:length(times_d_short[string(strat, "1")])]
 
-      times_d[string(strat, "2")] = times_d[string(strat, "2")].-times_d[string(strat, "2")][1]
-      times_d_short[string(strat, "2")] = times_d[string(strat, "2")][times_d[string(strat, "2")] .< 30]
-      error_d_res_short[string(strat, "2")] = error_d_res[string(strat, "2")][1:length(times_d_short[string(strat, "2")])]
+      #times_d[string(strat, "2")] = times_d[string(strat, "2")].-times_d[string(strat, "2")][1]
+      #times_d_short[string(strat, "2")] = times_d[string(strat, "2")][times_d[string(strat, "2")] .< 30]
+      #error_d_res_short[string(strat, "2")] = error_d_res[string(strat, "2")][1:length(times_d_short[string(strat, "2")])]
 end
 
 
@@ -65,7 +65,7 @@ min_error = Dict()
 error_fixed_time = Dict()
 
 for strat in 1:6
-      for min in 1:2
+      for min in 1:1
             total_time[string(strat, min)] = times_d[string(strat, min)][end]
             final_error[string(strat, min)] = error_d_res[string(strat, min)][end]
             min_error[string(strat, min)] = minimum(error_d_res[string(strat, min)])
@@ -114,17 +114,17 @@ print("\n Plotting error vs iters")
 #Plot error vs iters ADAM
 #Plotting the first strategy with the first minimizer out from the loop to initialize the canvas
 current_label = string(strategies_short_name[1])
-error = Plots.plot(1:length(error_d_res["11"]), error_d_res["11"], yaxis=:log10, title = string("Diffusion convergence - ADAM(0.001) / 50k iter."), ylabel = "Error", label = current_label)#legend = true)#, size=(1200,700))
-plot!(error, 1:length(error_d_res["11"]), error_d_res[string(2,1)], yaxis=:log10, label = string(strategies_short_name[2]))
-#plot!(error, 1:length(error_d_res["11"]), error_d_res[string(3,1)], yaxis=:log10, label = string(strategies_short_name[3]))
-plot!(error, 1:length(error_d_res["11"]), error_d_res[string(4,1)], yaxis=:log10, label = string(strategies_short_name[4]))
-plot!(error, 1:length(error_d_res["11"]), error_d_res[string(5,1)], yaxis=:log10, label = string(strategies_short_name[5]))
-plot!(error, 1:length(error_d_res["11"]), error_d_res[string(6,1)], yaxis=:log10, label = string(strategies_short_name[6]))
+error = Plots.plot(1:length(error_d_res["11"]), error_d_res["11"], yaxis=:log10, title = string("Diffusion convergence - ADAM(0.001) / 50k iter."), ylabel = "Error", label = current_label)
+plot!(error, 1:length(error_d_res["21"]), error_d_res[string(2,1)], yaxis=:log10, label = string(strategies_short_name[2]))
+#plot!(error, 1:length(error_d_res["31"]), error_d_res[string(3,1)], yaxis=:log10, label = string(strategies_short_name[3]))
+plot!(error, 1:length(error_d_res["41"]), error_d_res[string(4,1)], yaxis=:log10, label = string(strategies_short_name[4]))
+plot!(error, 1:length(error_d_res["51"]), error_d_res[string(5,1)], yaxis=:log10, label = string(strategies_short_name[5]))
+plot!(error, 1:length(error_d_res["61"]), error_d_res[string(6,1)], yaxis=:log10, label = string(strategies_short_name[6]))
 
 
 Plots.plot(error, bar, layout = Plots.grid(1, 2, widths=[0.6 ,0.4]), size = (1500,500))
 
-Plots.savefig("./Results/Error vs Iters/Diffusion/diffusion_comparison_50k_iters_ADAM_5strat.pdf")
+Plots.savefig("./Results/Plots/Error vs Iters/Diffusion/diffusion_comparison_50k_iters_ADAM_1_reltol.pdf")
 
 #Plot error vs iters LBFGS
 current_label = string(strategies_short_name[1])
@@ -146,14 +146,14 @@ Plots.savefig("./Results/Error vs Iters/Diffusion/diffusion_comparison_LBFGS_5st
 print("\n Plotting error_d vs time")
 #Plotting the first strategy with the first minimizer out from the loop to initialize the canvas
 current_label = string(strategies_short_name[1])#, " + " , minimizers_short_name[1])
-error_d_adam = Plots.plot(times_d_short["11"], error_d_res_short["11"], yaxis=:log10, title = string("Diffusion convergence - ADAM (0.001)"), ylabel = "Error", label = current_label, xlabel = "Time (seconds)", size = (1500,500))#legend = true)#, size=(1200,700))
+error_d_adam = Plots.plot(times_d_short["11"], error_d_res_short["11"], yaxis=:log10, title = string("Diffusion convergence - ADAM (0.001) / First 300 seconds of training"), ylabel = "Error", label = current_label, xlabel = "Time (seconds)", size = (1500,500))#legend = true)#, size=(1200,700))
 plot!(error_d_adam, times_d_short["21"], error_d_res_short["21"], yaxis=:log10, label = string(strategies_short_name[2]))#, ylabel = "log(error_d)", label = string(strategies_short_name[2]))#, " + " , minimizers_short_name[1]))
 #plot!(error_d_adam, times_d_short["31"], error_d_res_short["31"], yaxis=:log10, label = string(strategies_short_name[3]))#, " + " , minimizers_short_name[1]))
 plot!(error_d_adam, times_d_short["41"], error_d_res_short["41"], yaxis=:log10, label = string(strategies_short_name[4]))#, " + " , minimizers_short_name[1]))
 plot!(error_d_adam, times_d_short["51"], error_d_res_short["51"], yaxis=:log10, label = string(strategies_short_name[5]))#, " + " , minimizers_short_name[1]))
 plot!(error_d_adam, times_d_short["61"], error_d_res_short["61"], yaxis=:log10, label = string(strategies_short_name[6]))#, " + " , minimizers_short_name[1]))
 
-Plots.savefig("Diffusion_et_ADAM_large_5strat.pdf")
+Plots.savefig("./Results/Plots/Error vs Time/Diffusion/Diffusion_et_ADAM_1_reltol.pdf")
 
 
 #Plotting error vs time with L-BFGS
@@ -184,12 +184,12 @@ u_predict = Dict()
 diff_u = Dict()
 total_errors = Dict()
 for strat in 1:6
-      for min in 1:2
+      for min in 1:1
             chain = FastChain(FastDense(2,18,Flux.σ),FastDense(18,18,Flux.σ),FastDense(18,1))
             discretization = PhysicsInformedNN(chain,strategies[strat])
             phi = discretization.phi
             u_predict[strat,min] = reshape([first(phi([x,t],pars_d_res[string(strat,min)])) for x in xs for t in ts],(length(xs),length(ts)))
-            diff_u[strat,min] = abs.(u_predict[strat,min] .- u_real[strat,min])
+            diff_u[strat,min] = abs.(u_predict[strat,min] .- u_real)
             #push!(total_errors , mean(diff_u))
             #push!(u_predicts, u_predict)
             #push!(diff_us, diff_u)
@@ -201,12 +201,12 @@ diff_u
 #names  = ["GridTraining","StochasticTraining", "QuasiRandomTraining", "" ]
 #for (u_predict, diff_u,strategy,name) in zip(u_predicts,diff_us,strategies,names)
 for strat in 1:6
-      for min in 1:2
-            p1 = plot(xs, ts, u_real, linetype=:contourf,title = "Analytic");
-            p2 = plot(xs, ts, u_predict[strat,min], linetype=:contourf,title = string("Prediction ", strategies_short_name[strat], " / ", minimizers_short_name[min]));
+      for min in 1:1
+            p1 = plot(xs, ts, u_real, linetype=:contourf,title = "Analytic",clims = (-1,1));
+            p2 = plot(xs, ts, u_predict[strat,min], linetype=:contourf,title = string(strategies_short_name[strat], " / ", minimizers_short_name[min]), clims=(-1,1));
             p3 = plot(xs, ts, diff_u[strat,min],linetype=:contourf,title = "Error");
-            plot(p1,p2,p3)
-            savefig(string("predict_",strategies_short_name[strat],"_",minimizers_short_name[min]))
+            plot(p1,p2,p3, layout = Plots.grid(1, 3), size = (1500,300));
+            savefig(string("./Results/Predictions_diffusion/predict_",strategies_short_name[strat],"_",minimizers_short_name[min],".pdf"))
       end
 end
 

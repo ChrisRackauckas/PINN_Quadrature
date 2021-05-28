@@ -9,7 +9,7 @@ include("./hamilton_jacobi_et.jl")
 
 
 # Settings:
-maxIters = [(2000,2000,2000,2000,2000,20000,20000)] #iters for ADAM/LBFGS
+maxIters = [(0,0,0,0,0,20000,20000),(300,300,300,300,300,300,300)] #iters for ADAM/LBFGS
 
 
 strategies = [NeuralPDE.QuadratureTraining(quadrature_alg = CubaCuhre(), reltol = 1, abstol = 1e-4, maxiters = 100),
@@ -28,13 +28,13 @@ strategies_short_name = ["CubaCuhre",
                         "StochasticTraining",
                         "QuasiRandomTraining"]
 
-minimizers = [GalacticOptim.ADAM(0.005)]
+minimizers = [GalacticOptim.ADAM(0.005),
               #GalacticOptim.BFGS()]
-              #GalacticOptim.LBFGS()]
+              GalacticOptim.LBFGS()]
 
 
-minimizers_short_name = ["ADAM"]
-                        # "LBFGS"]
+minimizers_short_name = ["ADAM",
+                         "LBFGS"]
                         #"BFGS"]
 
 
