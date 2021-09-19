@@ -154,7 +154,7 @@ Plots.savefig("./Results/Plots/Error vs Time/Level Set/Level_Set_et_LBFGS_125s_r
 
 
 
-##ADAM vs L-BFGS comparison - first 100 iters
+##ADAM vs L-BFGS comparison - first 200 iters
 error_ls_res_short_iters = Dict()
 
 for strat in 1:5

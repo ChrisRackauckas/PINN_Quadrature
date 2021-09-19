@@ -36,9 +36,27 @@ benchmark_res = Dict()
 error_res =  Dict()
 domains = Dict()
 
-error_d_res = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run4/diffusion_errors_run1.jld")["error_res"]
-times_d = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run4/diffusion_times_run1.jld")["times"]
-pars_d_res = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run4/diffusion_params_run1.jld")["params_res"]
+error_d_res_1 = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run4/diffusion_errors_run1.jld")["error_res"]
+times_d_1 = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run4/diffusion_times_run1.jld")["times"]
+pars_d_res_1 = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run4/diffusion_params_run1.jld")["params_res"]
+
+error_d_res_2 = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run4/diffusion_Errors_run2.jld")["error_res"]
+times_d_2 = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run4/diffusion_Timeline_run2.jld")["times"]
+pars_d_res_2 = load("/Users/francescocalisto/Documents/FRANCESCO/ACADEMICS/Università/MLJC/Sci-ML Julia/PINN_Quadrature-local/Results/Run4/diffusion_Params_run2.jld")["params_res"]
+
+error_d_res = Dict()
+times_d = Dict()
+pars_d_res = Dict()
+
+for strat in 1:6
+      error_d_res[string(strat,"1")] = error_d_res_1[string(strat,"1")]
+      times_d[string(strat,"1")] = times_d_1[string(strat,"1")]
+      pars_d_res[string(strat,"1")] = pars_d_res_1[string(strat,"1")]
+
+      error_d_res[string(strat,"2")] = error_d_res_2[string(strat,"2")]
+      times_d[string(strat,"2")] = times_d_2[string(strat,"2")]
+      pars_d_res[string(strat,"2")] = pars_d_res_2[string(strat,"2")]
+end
 
 error_d_res
 times_d
@@ -49,12 +67,12 @@ error_d_res_short = Dict()
 
 for strat in 1:6
       times_d[string(strat, "1")] = times_d[string(strat, "1")].-times_d[string(strat, "1")][1]
-      times_d_short[string(strat, "1")] = times_d[string(strat, "1")][times_d[string(strat, "1")] .< 300]
+      times_d_short[string(strat, "1")] = times_d[string(strat, "1")][times_d[string(strat, "1")] .< 500]
       error_d_res_short[string(strat, "1")] = error_d_res[string(strat, "1")][1:length(times_d_short[string(strat, "1")])]
 
-      #times_d[string(strat, "2")] = times_d[string(strat, "2")].-times_d[string(strat, "2")][1]
-      #times_d_short[string(strat, "2")] = times_d[string(strat, "2")][times_d[string(strat, "2")] .< 30]
-      #error_d_res_short[string(strat, "2")] = error_d_res[string(strat, "2")][1:length(times_d_short[string(strat, "2")])]
+      times_d[string(strat, "2")] = times_d[string(strat, "2")].-times_d[string(strat, "2")][1]
+      times_d_short[string(strat, "2")] = times_d[string(strat, "2")][times_d[string(strat, "2")] .< 50]
+      error_d_res_short[string(strat, "2")] = error_d_res[string(strat, "2")][1:length(times_d_short[string(strat, "2")])]
 end
 
 
@@ -65,7 +83,7 @@ min_error = Dict()
 error_fixed_time = Dict()
 
 for strat in 1:6
-      for min in 1:1
+      for min in 1:2
             total_time[string(strat, min)] = times_d[string(strat, min)][end]
             final_error[string(strat, min)] = error_d_res[string(strat, min)][end]
             min_error[string(strat, min)] = minimum(error_d_res[string(strat, min)])
@@ -138,7 +156,7 @@ plot!(error2, 1:length(error_d_res["62"]), error_d_res[string(6,2)], yaxis=:log1
 
 Plots.plot(error2, bar2, layout = Plots.grid(1, 2, widths=[0.6 ,0.4]), size = (1500,500))
 
-Plots.savefig("./Results/Error vs Iters/Diffusion/diffusion_comparison_LBFGS_5strat.pdf")
+Plots.savefig("./Results/Plots/Error vs Iters/Diffusion/diffusion_comparison_LBFGS_reltol_1.pdf")
 
 
 ##PLOTS ERROR VS TIME
@@ -159,13 +177,54 @@ Plots.savefig("./Results/Plots/Error vs Time/Diffusion/Diffusion_et_ADAM_1_relto
 #Plotting error vs time with L-BFGS
 error_d_lbfgs = Plots.plot(times_d_short["12"], error_d_res_short["12"], yaxis=:log10, title = string("Diffusion convergence - L-BFGS"), ylabel = "Error", label = string(strategies_short_name[1]), xlabel = "Time (seconds)")
 plot!(error_d_lbfgs, times_d_short["22"], error_d_res_short["22"], yaxis=:log10, label = string(strategies_short_name[2]))#, " + " , minimizers_short_name[2]))
-plot!(error_d_lbfgs, times_d_short["32"], error_d_res_short["32"], yaxis=:log10, label = string(strategies_short_name[3]))#, " + " , minimizers_short_name[2]))
+#plot!(error_d_lbfgs, times_d_short["32"], error_d_res_short["32"], yaxis=:log10, label = string(strategies_short_name[3]))#, " + " , minimizers_short_name[2]))
 plot!(error_d_lbfgs, times_d_short["42"], error_d_res_short["42"], yaxis=:log10, label = string(strategies_short_name[4]))#, " + " , minimizers_short_name[2]))
 plot!(error_d_lbfgs, times_d_short["52"], error_d_res_short["52"], yaxis=:log10, label = string(strategies_short_name[5]))#, " + " , minimizers_short_name[2]))
 plot!(error_d_lbfgs, times_d_short["62"], error_d_res_short["62"], yaxis=:log10, label = string(strategies_short_name[6]))#, " + " , minimizers_short_name[2]))
 
 Plots.savefig("Diffusion_et_LBFGS.pdf")
 
+
+
+##ADAM vs L-BFGS comparison - first 200 iters
+error_d_res_short_iters = Dict()
+
+for strat in 1:3
+      for min in 1:2
+            error_d_res_short_iters[string(strat, min)] = error_d_res[string(strat, min)][1:50]
+      end
+end
+for strat in 4:6
+      for min in 1:1
+            error_d_res_short_iters[string(strat, min)] = error_d_res[string(strat, min)][1:50]
+      end
+end
+for strat in 4:6
+      for min in 2:2
+            error_d_res_short_iters[string(strat, min)] = error_d_res[string(strat, min)]
+      end
+end
+
+
+current_label = string(strategies_short_name[1])
+error_adam = Plots.plot(1:length(error_d_res_short_iters["11"]), error_d_res_short_iters["11"], yaxis=:log10, title = string("Diffusion convergence - ADAM(0.005) / First 50 iter."), ylabel = "Error", label = current_label, ylims = (0.1,15))#legend = true)#, size=(1200,700))
+plot!(error_adam, 1:length(error_d_res_short_iters["21"]), error_d_res_short_iters[string(2,1)], yaxis=:log10, label = string(strategies_short_name[2]))
+#plot!(error_adam, 1:length(error_d_res_short_iters["31"]), error_d_res_short_iters[string(3,1)], yaxis=:log10, label = string(strategies_short_name[3]))
+plot!(error_adam, 1:length(error_d_res_short_iters["41"]), error_d_res_short_iters[string(4,1)], yaxis=:log10, label = string(strategies_short_name[4]))
+plot!(error_adam, 1:length(error_d_res_short_iters["51"]), error_d_res_short_iters[string(5,1)], yaxis=:log10, label = string(strategies_short_name[5]))
+plot!(error_adam, 1:length(error_d_res_short_iters["61"]), error_d_res_short_iters[string(6,1)], yaxis=:log10, label = string(strategies_short_name[6]))
+
+#LBFGS
+current_label = string(strategies_short_name[1])
+error_lbfgs = Plots.plot(1:length(error_d_res_short_iters["11"]), error_d_res_short_iters["12"], yaxis=:log10, title = string("Diffusion convergence - L-BFGS / First 50 iter."), ylabel = "Error", label = current_label, ylims = (0.1,15))#legend = true)#, size=(1200,700))
+plot!(error_lbfgs, 1:length(error_d_res_short_iters["22"]), error_d_res_short_iters[string(2,2)], yaxis=:log10, label = string(strategies_short_name[2]))
+#plot!(error_lbfgs, 1:length(error_d_res_short_iters["32"]), error_d_res_short_iters[string(3,2)], yaxis=:log10, label = string(strategies_short_name[3]))
+plot!(error_lbfgs, 1:length(error_d_res_short_iters["42"]), error_d_res_short_iters[string(4,2)], yaxis=:log10, label = string(strategies_short_name[4]))
+plot!(error_lbfgs, 1:length(error_d_res_short_iters["52"]), error_d_res_short_iters[string(5,2)], yaxis=:log10, label = string(strategies_short_name[5]))
+plot!(error_lbfgs, 1:length(error_d_res_short_iters["62"]), error_d_res_short_iters[string(6,2)], yaxis=:log10, label = string(strategies_short_name[6]))
+
+Plots.plot(error_adam, error_lbfgs, layout = Plots.grid(1, 2, widths=[0.5 ,0.5]), size = (1500,500))
+Plots.savefig("./Results/Plots/Error vs Iters/Diffusion/Diffusion_ADAM_vs_LBFGS_50_iter_reltol_1.pdf")
 
 
 
